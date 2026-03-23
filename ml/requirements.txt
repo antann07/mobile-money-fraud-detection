@@ -1,0 +1,22 @@
+# AI/ML Microservice Dependencies
+# For: Mobile Money Fraud Detection ML API
+# Python 3.9+
+
+# Core ML
+pandas==2.2.3
+numpy==1.26.4
+scikit-learn==1.5.2
+joblib==1.4.2
+
+# API Server
+flask==3.1.0
+flask-cors==5.0.1
+
+# Database
+pymongo==4.7.3
+sqlalchemy==2.0.36
+
+# Utilities
+python-dotenv==1.0.1
+gunicorn==23.0.0
+0 

@@ -1,0 +1,1255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mobile Money Fraud Detection Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    /* ── Reset ──────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #f0f4f8;
+      color: #1e293b;
+      min-height: 100vh;
+    }
+
+    /* ── Header ─────────────────────────────────────────── */
+    header {
+      background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%);
+      color: #fff;
+      text-align: center;
+      padding: 36px 24px 28px;
+    }
+    header h1 { font-size: 1.7rem; font-weight: 700; letter-spacing: .4px; }
+    header p  { margin-top: 8px; font-size: .9rem; color: #94a3b8; }
+
+    /* ── Container ──────────────────────────────────────── */
+    .container {
+      max-width: 900px;
+      margin: 32px auto;
+      padding: 0 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    /* ── Card ───────────────────────────────────────────── */
+    .card {
+      background: #fff;
+      border-radius: 14px;
+      padding: 28px 32px;
+      box-shadow: 0 2px 16px rgba(0,0,0,.07);
+    }
+    .card h2 {
+      font-size: .85rem;
+      font-weight: 700;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: .7px;
+      margin-bottom: 18px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #e2e8f0;
+    }
+    .card h3 {
+      font-size: .78rem;
+      font-weight: 700;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: .6px;
+      margin-bottom: 12px;
+    }
+
+    /* ── Health ─────────────────────────────────────────── */
+    .health-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+    #btn-health {
+      padding: 9px 20px;
+      background: #1e3a5f;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: .875rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .2s;
+    }
+    #btn-health:hover { background: #2d5a8e; }
+    #health-result {
+      flex: 1;
+      min-width: 180px;
+      padding: 9px 14px;
+      border-radius: 8px;
+      font-size: .85rem;
+      background: #f1f5f9;
+      color: #64748b;
+      border: 1px solid #e2e8f0;
+    }
+    #health-result.ok    { background: #dcfce7; color: #166534; border-color: #86efac; }
+    #health-result.error { background: #fee2e2; color: #991b1b; border-color: #fca5a5; }
+
+    /* ── Form ───────────────────────────────────────────── */
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 24px; }
+    @media (max-width: 580px) { .form-grid { grid-template-columns: 1fr; } }
+    .field { display: flex; flex-direction: column; gap: 5px; }
+    label {
+      font-size: .75rem;
+      font-weight: 700;
+      color: #475569;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+    }
+    label .hint { font-weight: 400; text-transform: none; color: #94a3b8; font-size: .73rem; }
+    input[type="number"], select {
+      padding: 9px 12px;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 8px;
+      font-size: .9rem;
+      color: #1e293b;
+      background: #fff;
+      transition: border-color .2s, box-shadow .2s;
+      -moz-appearance: textfield;
+    }
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
+    input[type="number"]:focus, select:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59,130,246,.15);
+    }
+
+    /* ── Buttons ────────────────────────────────────────── */
+    .btn-row { margin-top: 22px; display: flex; gap: 12px; }
+    .btn-primary, .btn-secondary {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      border-radius: 9px;
+      font-size: .95rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity .2s, transform .1s;
+    }
+    .btn-primary  { background: linear-gradient(135deg, #1d4ed8, #1e3a5f); color: #fff; }
+    .btn-secondary { background: #e2e8f0; color: #334155; }
+    .btn-primary:hover   { opacity: .88; }
+    .btn-secondary:hover { background: #cbd5e1; }
+    .btn-primary:active, .btn-secondary:active { transform: scale(.98); }
+    .btn-primary:disabled { opacity: .5; cursor: not-allowed; }
+
+    /* ── Status ─────────────────────────────────────────── */
+    #form-status {
+      display: none;
+      margin-top: 10px;
+      padding: 9px 14px;
+      border-radius: 8px;
+      font-size: .84rem;
+    }
+    #form-status.info  { background: #eff6ff; color: #1d4ed8; }
+    #form-status.error { background: #fee2e2; color: #b91c1c; }
+
+    /* ── Result card ─────────────────────────────────────── */
+    #result-card {
+      display: none;
+      animation: fadeSlideIn .4s ease;
+    }
+    @keyframes fadeSlideIn {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* verdict row */
+    .verdict-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 22px;
+    }
+    .verdict {
+      font-size: 1.55rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+    }
+    .verdict.suspicious { color: #dc2626; }
+    .verdict.normal     { color: #16a34a; }
+
+    /* badge / pill */
+    .pill {
+      padding: 5px 16px;
+      border-radius: 20px;
+      font-size: .75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .6px;
+      transition: background .3s, color .3s;
+    }
+    .pill.suspicious { background: #fee2e2; color: #b91c1c; }
+    .pill.normal     { background: #dcfce7; color: #15803d; }
+
+    /* result main: stats + gauge */
+    .result-main {
+      display: flex;
+      align-items: flex-start;
+      gap: 20px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+    .stats-grid {
+      flex: 1;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+    @media (max-width: 500px) { .stats-grid { grid-template-columns: 1fr 1fr; } }
+    .stat {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 12px 14px;
+    }
+    .stat-label {
+      font-size: .67rem;
+      font-weight: 700;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: .6px;
+      margin-bottom: 5px;
+    }
+    .stat-value {
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: #0f172a;
+      transition: color .3s;
+    }
+
+    /* gauge */
+    .gauge-wrap {
+      width: 160px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+    .gauge-wrap canvas { display: block; margin: 0 auto; }
+    .gauge-pct {
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: #0f172a;
+      margin-top: -8px;
+    }
+    .gauge-lbl {
+      font-size: .7rem;
+      font-weight: 700;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      margin-top: 2px;
+    }
+
+    /* feature chart */
+    .chart-section {
+      margin-bottom: 20px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 14px 16px;
+    }
+
+    /* explanation */
+    .explanation {
+      background: #fffbeb;
+      border-left: 4px solid #f59e0b;
+      border-radius: 6px;
+      padding: 14px 18px;
+      font-size: .875rem;
+      color: #78350f;
+      line-height: 1.65;
+    }
+    .explanation strong {
+      display: block;
+      margin-bottom: 6px;
+      color: #451a03;
+      font-size: .78rem;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+    }
+
+    /* ── Recent Transactions Table ───────────────────────── */
+    #history-empty { color: #94a3b8; font-size: .875rem; }
+
+    .txn-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .83rem;
+    }
+    .txn-table thead th {
+      text-align: left;
+      padding: 9px 10px;
+      font-size: .7rem;
+      font-weight: 700;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      border-bottom: 2px solid #e2e8f0;
+    }
+    .txn-table tbody tr {
+      border-bottom: 1px solid #f1f5f9;
+      transition: background .15s;
+    }
+    .txn-table tbody tr:hover { background: #f8fafc; }
+    .txn-table tbody td {
+      padding: 10px 10px;
+      color: #334155;
+    }
+    .badge {
+      display: inline-block;
+      padding: 3px 12px;
+      border-radius: 12px;
+      font-size: .72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .4px;
+    }
+    .badge.suspicious { background: #fee2e2; color: #b91c1c; }
+    .badge.normal     { background: #dcfce7; color: #15803d; }
+
+    /* ── Footer ─────────────────────────────────────────── */
+    footer {
+      text-align: center;
+      padding: 24px 0 36px;
+      font-size: .75rem;
+      color: #94a3b8;
+    }
+    /* ── Risk Summary grid ──────────────────────────────── */
+    .risk-summary-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    @media (max-width: 640px) { .risk-summary-grid { grid-template-columns: 1fr 1fr; } }
+    .rs-box {
+      border-radius: 10px;
+      padding: 14px 16px;
+      border: 1.5px solid #e2e8f0;
+      background: #f8fafc;
+      transition: border-color .3s, background .3s;
+    }
+    .rs-box.suspicious { background: #fff1f2; border-color: #fecdd3; }
+    .rs-box.normal     { background: #f0fdf4; border-color: #bbf7d0; }
+    .rs-label {
+      font-size: .65rem;
+      font-weight: 700;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: .6px;
+      margin-bottom: 6px;
+    }
+    .rs-value {
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: #0f172a;
+    }
+    .rs-reason {
+      font-size: .82rem;
+      font-weight: 600;
+      color: #334155;
+      line-height: 1.4;
+    }
+
+    /* ── Suspicious Signals ──────────────────────────────── */
+    .signal-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .signal-tag {
+      padding: 5px 13px;
+      border-radius: 20px;
+      font-size: .78rem;
+      font-weight: 600;
+      border: 1.5px solid;
+    }
+    .signal-tag.suspicious { background: #fff1f2; color: #be123c; border-color: #fecdd3; }
+    .signal-tag.normal     { background: #f0fdf4; color: #166534; border-color: #bbf7d0; }
+
+    /* ── Fraud Summary bar ──────────────────────────────── */
+    .fraud-summary {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    @media (max-width: 640px) { .fraud-summary { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 480px) { .fraud-summary { grid-template-columns: 1fr; } }
+    .fs-box {
+      border-radius: 10px;
+      padding: 14px 18px;
+      text-align: center;
+      border: 1.5px solid #e2e8f0;
+      background: #f8fafc;
+    }
+    .fs-icon { font-size: 1.4rem; line-height: 1; margin-bottom: 6px; }
+    .fs-value { font-size: 1.6rem; font-weight: 800; color: #0f172a; line-height: 1.1; }
+    .fs-label { font-size: .65rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: .6px; margin-top: 4px; }
+    .fs-box.total     { border-color: #bfdbfe; background: #eff6ff; }
+    .fs-box.suspicious{ border-color: #fecdd3; background: #fff1f2; }
+    .fs-box.suspicious .fs-value { color: #dc2626; }
+    .fs-box.rate      { border-color: #fed7aa; background: #fff7ed; }
+    .fs-box.rate .fs-value { color: #c2410c; }
+
+  </style>
+</head>
+<body>
+
+<!-- Header -->
+<header>
+  <h1>Mobile Money Fraud Detection Dashboard</h1>
+  <p>AI-powered unauthorized withdrawal detection &mdash; Isolation Forest &middot; Explainable AI</p>
+</header>
+
+<div class="container">
+
+  <!-- API Health -->
+  <div class="card">
+    <h2>API Health</h2>
+    <div class="health-row">
+      <button id="btn-health" onclick="checkHealth()">Check API Health</button>
+      <div id="health-result">Press the button to check API status.</div>
+    </div>
+  </div>
+
+  <!-- Transaction Form -->
+  <div class="card">
+    <h2>Transaction Details</h2>
+    <form id="predict-form" onsubmit="predictFraud(event)">
+      <div class="form-grid">
+
+        <div class="field">
+          <label for="amount">Amount <span class="hint">(GHS)</span></label>
+          <input id="amount" type="number" step="any" value="8000" required />
+        </div>
+
+        <div class="field">
+          <label for="balance_before">Balance Before <span class="hint">(GHS)</span></label>
+          <input id="balance_before" type="number" step="any" value="4000" required />
+        </div>
+
+        <div class="field">
+          <label for="balance_after">Balance After <span class="hint">(GHS)</span></label>
+          <input id="balance_after" type="number" step="any" value="0" required />
+        </div>
+
+        <div class="field">
+          <label for="sim_swap_flag">SIM Swap Flag</label>
+          <select id="sim_swap_flag">
+            <option value="0">0 &mdash; No SIM swap</option>
+            <option value="1" selected>1 &mdash; SIM swap detected</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="txn_hour">Transaction Hour <span class="hint">(0 &ndash; 23)</span></label>
+          <input id="txn_hour" type="number" min="0" max="23" step="1" value="2" required />
+        </div>
+
+        <div class="field">
+          <label for="amount_zscore">Amount Z-Score</label>
+          <input id="amount_zscore" type="number" step="any" value="2.0" required />
+        </div>
+
+        <div class="field">
+          <label for="txn_time_deviation">Time Deviation <span class="hint">(hours)</span></label>
+          <input id="txn_time_deviation" type="number" step="any" value="4.6" required />
+        </div>
+
+        <div class="field">
+          <label for="balance_drain_ratio">Balance Drain Ratio</label>
+          <input id="balance_drain_ratio" type="number" step="any" value="2.0" required />
+        </div>
+
+        <div class="field">
+          <label for="is_new_device">New Device</label>
+          <select id="is_new_device">
+            <option value="0">0 &mdash; Known device</option>
+            <option value="1" selected>1 &mdash; New device</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="is_new_location">New Location</label>
+          <select id="is_new_location">
+            <option value="0">0 &mdash; Known location</option>
+            <option value="1" selected>1 &mdash; New location</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="velocity_1day">Velocity (1 day) <span class="hint">(txn count)</span></label>
+          <input id="velocity_1day" type="number" min="0" step="1" value="3" required />
+        </div>
+
+      </div><!-- /.form-grid -->
+
+      <p id="form-status"></p>
+
+      <div class="btn-row">
+        <button class="btn-primary" type="submit" id="btn-predict">Predict Fraud</button>
+        <button class="btn-secondary" type="button" onclick="resetForm()">Reset</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Result Card -->
+  <div class="card" id="result-card">
+    <h2>Prediction Result</h2>
+
+    <!-- Verdict + badge -->
+    <div class="verdict-row">
+      <span class="verdict" id="res-verdict"></span>
+      <span class="pill"   id="res-pill"></span>
+    </div>
+
+    <!-- Risk Summary (4 key metrics) -->
+    <div class="risk-summary-grid">
+      <div class="rs-box" id="rs-prediction-box">
+        <div class="rs-label">Prediction</div>
+        <div class="rs-value" id="rsPrediction">—</div>
+      </div>
+      <div class="rs-box" id="rs-level-box">
+        <div class="rs-label">Risk Level</div>
+        <div class="rs-value" id="riskLevel">—</div>
+      </div>
+      <div class="rs-box" id="rs-score-box">
+        <div class="rs-label">Anomaly Score</div>
+        <div class="rs-value" id="anomalyScore">—</div>
+      </div>
+      <div class="rs-box" id="rs-reason-box">
+        <div class="rs-label">Main Reason</div>
+        <div class="rs-reason" id="rsMainReason">—</div>
+      </div>
+    </div>
+
+    <!-- Anomaly label stat + gauge -->
+    <div class="result-main">
+      <div class="stats-grid" style="grid-template-columns: 1fr;">
+        <div class="stat">
+          <div class="stat-label">Anomaly Label</div>
+          <div class="stat-value" id="anomalyLabel">—</div>
+        </div>
+      </div>
+      <div class="gauge-wrap">
+        <canvas id="gaugeChart" width="160" height="95"></canvas>
+        <div id="gaugePct" class="gauge-pct">—</div>
+        <div class="gauge-lbl">Risk Score</div>
+      </div>
+    </div>
+
+    <!-- Suspicious Signals -->
+    <div id="signals-section" style="display:none; margin-bottom:20px;">
+      <h3>Suspicious Signals</h3>
+      <div class="signal-tags" id="signal-tags"></div>
+    </div>
+
+    <!-- Feature values bar chart -->
+    <div class="chart-section">
+      <h3>Feature Values (submitted transaction)</h3>
+      <canvas id="featureChart" height="110"></canvas>
+    </div>
+
+    <!-- Pattern Summary -->
+    <div id="pattern-summary" style="display:none; border-radius:8px; padding:10px 16px; margin-bottom:14px; font-size:.88rem; font-weight:700; letter-spacing:.2px;"></div>
+
+    <!-- Explanation -->
+    <div class="explanation">
+      <!-- Model metadata bar -->
+      <div style="display:flex; flex-wrap:wrap; gap:18px; margin-bottom:12px; padding-bottom:12px; border-bottom:1px solid #fde68a;">
+        <div>
+          <span style="font-size:.65rem; font-weight:700; text-transform:uppercase; letter-spacing:.5px; color:#92400e;">Model</span><br>
+          <span style="font-size:.82rem; font-weight:700; color:#1e293b;">Isolation Forest</span>
+        </div>
+        <div>
+          <span style="font-size:.65rem; font-weight:700; text-transform:uppercase; letter-spacing:.5px; color:#92400e;">Detection Type</span><br>
+          <span style="font-size:.82rem; font-weight:700; color:#1e293b;">Unsupervised Anomaly Detection</span>
+        </div>
+        <div>
+          <span style="font-size:.65rem; font-weight:700; text-transform:uppercase; letter-spacing:.5px; color:#92400e;">Confidence Level</span><br>
+          <span id="confidenceLevel" style="font-size:.82rem; font-weight:700; color:#1e293b;">—</span>
+        </div>
+      </div>
+      <strong>Why was this flagged?</strong>
+      <p id="explanationText"></p>
+    </div>
+  </div>
+
+  <!-- Recent Transactions -->
+  <div class="card" id="history-card">
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;">
+      <h2 style="margin:0;">Recent Transactions</h2>
+      <div style="display:flex; gap:8px;">
+        <button onclick="loadStats()" style="padding:6px 14px; font-size:.8rem; border-radius:8px; background:#6366f1; color:#fff; border:none; cursor:pointer; font-weight:600;">&#128208; Stats</button>
+        <a href="http://127.0.0.1:5001/export" target="_blank"
+           style="padding:6px 14px; font-size:.8rem; border-radius:8px; background:#10b981; color:#fff; border:none; cursor:pointer; font-weight:600; text-decoration:none;">&#8595; Download Fraud Report</a>
+        <button onclick="loadHistory()" style="padding:6px 14px; font-size:.8rem; border-radius:8px; background:#3b82f6; color:#fff; border:none; cursor:pointer; font-weight:600;">&#8635; Refresh</button>
+      </div>
+    </div>
+
+    <!-- Fraud Summary (5 KPI boxes) -->
+    <div id="fraud-summary" style="display:none; margin-bottom:20px;">
+      <div class="fraud-summary">
+        <div class="fs-box total">
+          <div class="fs-icon">&#128196;</div>
+          <div class="fs-value" id="fs-total">0</div>
+          <div class="fs-label">Total Predictions</div>
+        </div>
+        <div class="fs-box suspicious">
+          <div class="fs-icon">&#9888;</div>
+          <div class="fs-value" id="fs-suspicious">0</div>
+          <div class="fs-label">Suspicious</div>
+        </div>
+        <div class="fs-box" style="border-color:#bbf7d0; background:#f0fdf4;">
+          <div class="fs-icon">&#10003;</div>
+          <div class="fs-value" id="fs-normal" style="color:#16a34a;">0</div>
+          <div class="fs-label">Normal</div>
+        </div>
+        <div class="fs-box rate">
+          <div class="fs-icon">&#128200;</div>
+          <div class="fs-value" id="fs-rate">0%</div>
+          <div class="fs-label">Fraud Rate</div>
+        </div>
+      </div>
+      <!-- secondary row -->
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:12px;">
+        <div class="fs-box" style="border-color:#d1d5db; background:#f9fafb; text-align:center; padding:12px 16px;">
+          <div class="fs-label">Avg Anomaly Score (all)</div>
+          <div class="fs-value" id="fs-avg-score" style="font-size:1.1rem;">—</div>
+        </div>
+        <div class="fs-box" style="border-color:#fecdd3; background:#fff1f2; text-align:center; padding:12px 16px;">
+          <div class="fs-label">Last 24 h &mdash; Suspicious</div>
+          <div class="fs-value" id="fs-24h" style="font-size:1.1rem; color:#dc2626;">—</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Hourly suspicious-count bar chart -->
+    <div id="hourly-section" style="display:none; margin-bottom:22px;">
+      <h3 style="font-size:.85rem; text-transform:uppercase; letter-spacing:.5px; color:#475569; margin-bottom:10px;">Suspicious Transactions by Hour of Day</h3>
+      <canvas id="hourlyChart" height="70"></canvas>
+    </div>
+    <div id="history-empty">Loading history&hellip;</div>
+    <div id="history-table-wrap" style="display:none; overflow-x:auto;">
+      <table class="txn-table" id="history-table">
+        <thead>
+          <tr>
+            <th>Time</th>
+            <th>Amount (GHS)</th>
+            <th>Prediction</th>
+            <th>Risk Level</th>
+            <th>Anomaly Score</th>
+          </tr>
+        </thead>
+        <tbody id="history-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- System Information -->
+  <div class="card">
+    <h2>System Information</h2>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px 24px;">
+      <div>
+        <div style="font-size:.7rem; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:.5px; margin-bottom:4px;">Model</div>
+        <div style="font-size:.95rem; font-weight:700; color:#0f172a;">Isolation Forest</div>
+      </div>
+      <div>
+        <div style="font-size:.7rem; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:.5px; margin-bottom:4px;">Detection Type</div>
+        <div style="font-size:.95rem; font-weight:700; color:#0f172a;">Unsupervised Anomaly Detection</div>
+      </div>
+      <div style="grid-column:1/-1;">
+        <div style="font-size:.7rem; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:.5px; margin-bottom:4px;">Purpose</div>
+        <div style="font-size:.88rem; color:#334155; line-height:1.5;">Detect unauthorised withdrawals in mobile money transactions by identifying anomalous behavioural patterns that deviate from a user's normal activity.</div>
+      </div>
+      <div style="grid-column:1/-1;">
+        <div style="font-size:.7rem; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:.5px; margin-bottom:8px;">Key Signals</div>
+        <div style="display:flex; flex-wrap:wrap; gap:8px;">
+          <span style="padding:5px 14px; border-radius:20px; font-size:.78rem; font-weight:600; background:#eff6ff; color:#1d4ed8; border:1.5px solid #bfdbfe;">amount_zscore</span>
+          <span style="padding:5px 14px; border-radius:20px; font-size:.78rem; font-weight:600; background:#fff1f2; color:#be123c; border:1.5px solid #fecdd3;">sim_swap_flag</span>
+          <span style="padding:5px 14px; border-radius:20px; font-size:.78rem; font-weight:600; background:#fff7ed; color:#c2410c; border:1.5px solid #fed7aa;">balance_drain_ratio</span>
+          <span style="padding:5px 14px; border-radius:20px; font-size:.78rem; font-weight:600; background:#f0fdf4; color:#166534; border:1.5px solid #bbf7d0;">device / location anomalies</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /.container -->
+
+<footer>Mobile Money Fraud Detection &mdash; Isolation Forest &middot; SHAP Explainability</footer>
+
+<script>
+  // ─────────────────────────────────────────────────────────────────
+  // Configuration
+  // ─────────────────────────────────────────────────────────────────
+  const API_BASE = 'http://127.0.0.1:5002';  // withdrawal_api.py
+
+  const DEFAULTS = {
+    amount: 8000, balance_before: 4000, balance_after: 0,
+    sim_swap_flag: '1', txn_hour: 2, amount_zscore: 2.0,
+    txn_time_deviation: 4.6, balance_drain_ratio: 2.0,
+    is_new_device: '1', is_new_location: '1', velocity_1day: 3,
+  };
+
+  const FEATURE_LABELS = {
+    amount: 'Amount', balance_before: 'Bal. Before',
+    balance_after: 'Bal. After', sim_swap_flag: 'SIM Swap',
+    txn_hour: 'Txn Hour', amount_zscore: 'Amt Z-Score',
+    txn_time_deviation: 'Time Dev.', balance_drain_ratio: 'Drain Ratio',
+    is_new_device: 'New Device', is_new_location: 'New Location',
+    velocity_1day: 'Velocity',
+  };
+
+  const FEATURES = Object.keys(FEATURE_LABELS);
+
+  // Recent transaction history (max 10)
+  let history = [];
+
+  // Chart instances (destroyed and recreated on each prediction)
+  let gaugeInst   = null;
+  let featureInst = null;
+
+  // ─────────────────────────────────────────────────────────────────
+  // Helpers
+  // ─────────────────────────────────────────────────────────────────
+  function setStatus(msg, type) {
+    const el = document.getElementById('form-status');
+    el.textContent = msg; el.className = type; el.style.display = 'block';
+  }
+  function clearStatus() {
+    document.getElementById('form-status').style.display = 'none';
+  }
+
+  // Map Isolation Forest anomaly_score → risk % [0, 100]
+  //
+  // decision_function polarity:
+  //   positive  → normal  (lower risk)
+  //   negative  → anomalous (higher risk)
+  //
+  // Calibrated bounds based on typical sklearn IF output range:
+  //   score ≥ SAFE_BOUND  →   0 % risk (clamped)
+  //   score ≤ RISKY_BOUND → 100 % risk (clamped)
+  //   anything in between → linear interpolation
+  function scoreToRiskPct(anomalyScore) {
+    const SAFE_BOUND  =  0.5;   // scores above this are clearly normal
+    const RISKY_BOUND = -0.5;   // scores below this are clearly anomalous
+    const span = SAFE_BOUND - RISKY_BOUND;               // 1.0
+    const raw  = (SAFE_BOUND - anomalyScore) / span * 100;
+    return parseFloat(Math.max(0, Math.min(100, raw)).toFixed(1));
+  }
+
+  // ─────────────────────────────────────────────────────────────────
+  // API Health
+  // ─────────────────────────────────────────────────────────────────
+  async function checkHealth() {
+    const box = document.getElementById('health-result');
+    box.className = ''; box.textContent = 'Checking API health…';
+    try {
+      const res  = await fetch(`${API_BASE}/health`);
+      const data = await res.json();
+      if (res.ok) {
+        box.className   = 'ok';
+        box.textContent = `✓ API is running · ${data.model || 'unknown'} · status: ${data.status || 'ok'}`;
+      } else {
+        throw new Error(data.error || `HTTP ${res.status}`);
+      }
+    } catch (err) {
+      box.className   = 'error';
+      box.textContent = `✗ API unreachable at ${API_BASE} — ${err.message}`;
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────────
+  // Predict Fraud
+  // ─────────────────────────────────────────────────────────────────
+  async function predictFraud(event) {
+    event.preventDefault();
+    clearStatus();
+
+    const btn = document.getElementById('btn-predict');
+    btn.disabled = true;
+    btn.textContent = 'Scoring transaction…';
+
+    // Collect payload
+    const payload = {};
+    for (const f of FEATURES) {
+      payload[f] = parseFloat(document.getElementById(f).value);
+    }
+
+    try {
+      const res  = await fetch(`${API_BASE}/predict`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      console.log('[predictFraud] API response:', data);
+
+      if (!res.ok) {
+        setStatus(`API error: ${data.details || data.error || res.statusText}`, 'error');
+        return;
+      }
+
+      renderResult(data, payload);
+
+    } catch (err) {
+      setStatus(
+        `Could not reach the API at ${API_BASE}. Make sure the Flask server is running.`,
+        'error'
+      );
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Predict Fraud';
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────────
+  // Render Result
+  // ─────────────────────────────────────────────────────────────────
+  function renderResult(data, payload) {
+    const isSuspicious = data.prediction === 'suspicious';
+    const cls          = isSuspicious ? 'suspicious' : 'normal';
+
+    // Verdict banner + badge
+    document.getElementById('res-verdict').textContent = isSuspicious ? '⚠ Suspicious' : '✓ Normal';
+    document.getElementById('res-verdict').className   = `verdict ${cls}`;
+    document.getElementById('res-pill').textContent    = isSuspicious ? 'Suspicious' : 'Normal';
+    document.getElementById('res-pill').className      = `pill ${cls}`;
+
+    // Color all four Risk Summary boxes to match verdict
+    document.querySelectorAll('.rs-box').forEach(el => { el.className = `rs-box ${cls}`; });
+
+    // Prediction text
+    const rsPred = document.getElementById('rsPrediction');
+    rsPred.textContent = isSuspicious ? 'Suspicious' : 'Normal';
+    rsPred.style.color = isSuspicious ? '#dc2626' : '#16a34a';
+
+    // Risk level
+    const riskEl = document.getElementById('riskLevel');
+    riskEl.textContent = isSuspicious ? 'HIGH RISK' : 'LOW RISK';
+    riskEl.style.color = isSuspicious ? '#dc2626' : '#16a34a';
+
+    // Anomaly score
+    document.getElementById('anomalyScore').textContent =
+      (data.anomaly_score != null) ? Number(data.anomaly_score).toFixed(4) : '—';
+
+    // Parse explanation into individual signals
+    const signals = parseSignals(data.explanation);
+
+    // Main Reason box — show first signal, or a default message
+    document.getElementById('rsMainReason').textContent =
+      signals.length ? signals[0] : (isSuspicious ? 'Combined pattern anomaly' : 'No anomaly detected');
+
+    // Anomaly label (technical 1/0 value)
+    document.getElementById('anomalyLabel').textContent =
+      (data.anomaly_label != null) ? data.anomaly_label : (isSuspicious ? 1 : 0);
+
+    // Full explanation text
+    document.getElementById('explanationText').textContent =
+      data.explanation || 'No explanation returned by the API.';
+
+    // Confidence level derived from anomaly_score
+    //   score ≥  0.3  → High confidence (clearly normal)
+    //   score ≤ -0.3  → High confidence (clearly anomalous)
+    //   -0.3 < score < 0.0 → Medium confidence
+    //   0.0 ≤ score < 0.3  → Low confidence (borderline)
+    const confEl = document.getElementById('confidenceLevel');
+    if (data.anomaly_score != null) {
+      const s = Number(data.anomaly_score);
+      let level, color;
+      if (s >= 0.3 || s <= -0.3) { level = 'High';   color = '#166534'; }
+      else if (s < 0)             { level = 'Medium'; color = '#92400e'; }
+      else                        { level = 'Low';    color = '#991b1b'; }
+      confEl.textContent = level;
+      confEl.style.color = color;
+    } else {
+      confEl.textContent = '—';
+      confEl.style.color = '#1e293b';
+    }
+
+    // Pattern summary
+    const patternEl = document.getElementById('pattern-summary');
+    const summary   = getPatternSummary(payload, isSuspicious);
+    if (summary) {
+      patternEl.textContent    = summary.text;
+      patternEl.style.display  = 'block';
+      patternEl.style.background = summary.bg;
+      patternEl.style.color      = summary.color;
+      patternEl.style.border     = `1.5px solid ${summary.border}`;
+    } else {
+      patternEl.style.display = 'none';
+    }
+
+    // Show suspicious signals as tags
+    showSignals(signals, isSuspicious);
+
+    // Gauge
+    const riskPct = (data.anomaly_score != null) ? scoreToRiskPct(data.anomaly_score) : (isSuspicious ? 75 : 25);
+    drawGauge(riskPct, isSuspicious);
+
+    // Feature bar chart
+    drawFeatureChart(payload, isSuspicious);
+
+    // Append to recent transactions history
+    addHistory(payload, data, riskPct);
+
+    // Show result card with fade-in animation
+    const card = document.getElementById('result-card');
+    card.style.display = 'none';
+    requestAnimationFrame(() => {
+      card.style.display = 'block';
+      card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    });
+  }
+
+  // ─────────────────────────────────────────────────────────────────
+  // Gauge (half-donut using Chart.js doughnut)
+  // ─────────────────────────────────────────────────────────────────
+  function drawGauge(riskPct, isSuspicious) {
+    const ctx = document.getElementById('gaugeChart').getContext('2d');
+    const fillColor = isSuspicious ? '#dc2626' : '#16a34a';
+    const trackColor = '#e2e8f0';
+
+    if (gaugeInst) { gaugeInst.destroy(); }
+
+    gaugeInst = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        datasets: [{
+          data: [riskPct, 100 - riskPct],
+          backgroundColor: [fillColor, trackColor],
+          borderWidth: 0,
+          hoverBackgroundColor: [fillColor, trackColor],
+        }],
+      },
+      options: {
+        circumference: 180,    // half circle
+        rotation: -90,         // start at the left
+        cutout: '72%',
+        animation: { duration: 700, easing: 'easeOutQuart' },
+        plugins: { legend: { display: false }, tooltip: { enabled: false } },
+        responsive: false,
+      },
+    });
+
+    document.getElementById('gaugePct').textContent = `${riskPct.toFixed(1)}%`;
+    document.getElementById('gaugePct').style.color = fillColor;
+  }
+
+  // ─────────────────────────────────────────────────────────────────
+  // Feature Bar Chart
+  // ─────────────────────────────────────────────────────────────────
+  function drawFeatureChart(payload, isSuspicious) {
+    const ctx = document.getElementById('featureChart').getContext('2d');
+    if (featureInst) { featureInst.destroy(); }
+
+    const labels = FEATURES.map(f => FEATURE_LABELS[f]);
+    const values = FEATURES.map(f => payload[f] ?? 0);
+
+    // Color each bar: binary flags in blue, others by suspicion color
+    const binaryFlags = ['sim_swap_flag', 'is_new_device', 'is_new_location'];
+    const barColors = FEATURES.map(f =>
+      binaryFlags.includes(f)
+        ? (payload[f] ? '#f59e0b' : '#93c5fd')
+        : (isSuspicious ? '#fca5a5' : '#86efac')
+    );
+
+    featureInst = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [{
+          label: 'Value',
+          data: values,
+          backgroundColor: barColors,
+          borderRadius: 5,
+          borderWidth: 0,
+        }],
+      },
+      options: {
+        indexAxis: 'y',   // horizontal bars
+        animation: { duration: 600, easing: 'easeOutCubic' },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: ctx => ` ${ctx.parsed.x.toFixed(2)}`,
+            },
+          },
+        },
+        scales: {
+          x: {
+            grid: { color: '#f1f5f9' },
+            ticks: { font: { size: 11 }, color: '#64748b' },
+          },
+          y: {
+            grid: { display: false },
+            ticks: { font: { size: 11 }, color: '#475569' },
+          },
+        },
+        responsive: true,
+        maintainAspectRatio: false,
+      },
+    });
+  }
+
+  // ─────────────────────────────────────────────────────────────────
+  // Fraud Pattern Summary
+  // Returns {text, bg, color, border} based on key feature values,
+  // or null when the transaction looks normal.
+  // ─────────────────────────────────────────────────────────────────
+  function getPatternSummary(payload, isSuspicious) {
+    const simSwap   = Number(payload.sim_swap_flag)    || 0;
+    const zscore    = Number(payload.amount_zscore)    || 0;
+    const drainRatio= Number(payload.balance_drain_ratio) || 0;
+
+    // Suspicious patterns — checked in priority order
+    if (isSuspicious) {
+      if (simSwap >= 1 && zscore > 2) {
+        return { text: '⚠️ Potential account takeover activity', bg: '#fff1f2', color: '#be123c', border: '#fecdd3' };
+      }
+      if (simSwap >= 1) {
+        return { text: '⚠️ SIM swap linked to suspicious withdrawal', bg: '#fff1f2', color: '#be123c', border: '#fecdd3' };
+      }
+      if (drainRatio > 0.9) {
+        return { text: '⚠️ High-risk withdrawal pattern detected', bg: '#fff7ed', color: '#c2410c', border: '#fed7aa' };
+      }
+      if (zscore > 2) {
+        return { text: '⚠️ Unusual transaction amount detected', bg: '#fff7ed', color: '#c2410c', border: '#fed7aa' };
+      }
+      // fallback for any other suspicious combination
+      return { text: '⚠️ Unusual transaction behavior detected', bg: '#fff7ed', color: '#c2410c', border: '#fed7aa' };
+    }
+
+    // Normal transaction — show a reassuring note
+    return { text: '✓ Transaction pattern appears normal', bg: '#f0fdf4', color: '#166534', border: '#bbf7d0' };
+  }
+
+  // ─────────────────────────────────────────────────────────────────
+  // Parse signals from the API explanation text
+  // ─────────────────────────────────────────────────────────────────
+  // Example explanation:
+  //   "This transaction was flagged because amount_zscore was unusually
+  //    high (3.20); balance_drain_ratio was unusually high (2.00)."
+  // Returns an array of individual signal strings.
+  function parseSignals(explanation) {
+    if (!explanation) return [];
+    const idx = explanation.indexOf('because ');
+    if (idx === -1) return [];
+    const part = explanation.slice(idx + 8).replace(/\.$/, '');
+    return part.split(';').map(s => s.trim()).filter(Boolean);
+  }
+
+  // Display signals as colored tags in the Suspicious Signals section
+  function showSignals(signals, isSuspicious) {
+    const section = document.getElementById('signals-section');
+    const tagsEl  = document.getElementById('signal-tags');
+    if (!signals.length) {
+      section.style.display = 'none';
+      return;
+    }
+    const cls = isSuspicious ? 'suspicious' : 'normal';
+    tagsEl.innerHTML = signals
+      .map(s => `<span class="signal-tag ${cls}">${s}</span>`)
+      .join('');
+    section.style.display = 'block';
+  }
+
+  // ─────────────────────────────────────────────────────────────────
+  // Recent Predictions History
+  // ─────────────────────────────────────────────────────────────────
+
+  // Called after a local prediction — prepends to local cache and re-renders
+  function addHistory(payload, data, riskPct) {
+    const now  = new Date();
+    const time = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+    history.unshift({
+      time,
+      amount:     payload.amount,
+      prediction: data.prediction,
+      riskLevel:  data.prediction === 'suspicious' ? 'HIGH RISK' : 'LOW RISK',
+      score:      data.anomaly_score != null ? Number(data.anomaly_score).toFixed(4) : '—',
+    });
+
+    if (history.length > 50) history.pop();
+    renderHistory(history);
+  }
+
+  // Renders any array of {time, amount, prediction, riskLevel, score} objects
+  function renderHistory(items) {
+    const empty = document.getElementById('history-empty');
+    const wrap  = document.getElementById('history-table-wrap');
+    const tbody = document.getElementById('history-tbody');
+
+    updateSummary(items);
+
+    if (!items || items.length === 0) {
+      empty.textContent    = 'No history found.';
+      empty.style.display  = 'block';
+      wrap.style.display   = 'none';
+      return;
+    }
+
+    empty.style.display = 'none';
+    wrap.style.display  = 'block';
+
+    tbody.innerHTML = items.map(row => {
+      const isSusp    = row.prediction === 'suspicious';
+      const cls       = isSusp ? 'suspicious' : 'normal';
+      const label     = isSusp ? 'Suspicious' : 'Normal';
+      const riskColor = isSusp ? '#dc2626' : '#16a34a';
+      const rowBg     = isSusp ? '#fff1f2'  : '#f0fdf4';
+      return `
+        <tr style="background:${rowBg};">
+          <td>${row.time}</td>
+          <td>${Number(row.amount).toLocaleString()}</td>
+          <td><span class="badge ${cls}">${label}</span></td>
+          <td style="color:${riskColor}; font-weight:700;">${row.riskLevel}</td>
+          <td>${row.score}</td>
+        </tr>`;
+    }).join('');
+  }
+
+  let hourlyInst = null;   // Chart.js instance for hourly bar chart
+
+  function updateSummary(items) {
+    // Lightweight local update used when local history[] array changes.
+    // Full stats from /stats endpoint are managed by loadStats().
+    const summaryEl = document.getElementById('fraud-summary');
+    if (!items || items.length === 0) return; // don't hide — loadStats() controls visibility
+    const total      = items.length;
+    const suspicious = items.filter(r => r.prediction === 'suspicious').length;
+    const normal     = total - suspicious;
+    const rate       = ((suspicious / total) * 100).toFixed(1);
+    document.getElementById('fs-total').textContent      = total;
+    document.getElementById('fs-suspicious').textContent = suspicious;
+    document.getElementById('fs-normal').textContent     = normal;
+    document.getElementById('fs-rate').textContent       = rate + '%';
+    summaryEl.style.display = 'block';
+  }
+
+  // Fetch aggregate stats from /stats and update all KPI boxes + hourly chart
+  async function loadStats() {
+    try {
+      const res  = await fetch('http://127.0.0.1:5001/stats');
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const s = await res.json();
+
+      document.getElementById('fs-total').textContent      = s.total;
+      document.getElementById('fs-suspicious').textContent = s.suspicious;
+      document.getElementById('fs-normal').textContent     = s.normal;
+      document.getElementById('fs-rate').textContent       = s.fraud_rate_pct + '%';
+      document.getElementById('fs-avg-score').textContent  =
+        s.avg_score != null ? Number(s.avg_score).toFixed(4) : '—';
+      document.getElementById('fs-24h').textContent        = s.recent_24h.suspicious;
+
+      document.getElementById('fraud-summary').style.display = 'block';
+
+      // Draw hourly bar chart if data is available
+      if (s.hourly_counts && s.hourly_counts.length > 0) {
+        const hours  = Array.from({length: 24}, (_, i) => i);
+        const counts = hours.map(h => {
+          const found = s.hourly_counts.find(r => r.hour === h);
+          return found ? found.count : 0;
+        });
+        const ctx = document.getElementById('hourlyChart').getContext('2d');
+        if (hourlyInst) hourlyInst.destroy();
+        hourlyInst = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: hours.map(h => h.toString().padStart(2, '0') + ':00'),
+            datasets: [{
+              label: 'Suspicious',
+              data: counts,
+              backgroundColor: counts.map(c => c > 0 ? '#fca5a5' : '#e2e8f0'),
+              borderColor:     counts.map(c => c > 0 ? '#dc2626' : '#cbd5e1'),
+              borderWidth: 1,
+              borderRadius: 4,
+            }],
+          },
+          options: {
+            responsive: true,
+            plugins: { legend: { display: false }, tooltip: { callbacks: {
+              label: ctx => ` ${ctx.parsed.y} suspicious txn(s)`
+            }}}  ,
+            scales: {
+              x: { grid: { display: false }, ticks: { font: { size: 9 } } },
+              y: { beginAtZero: true, ticks: { stepSize: 1, font: { size: 10 } } },
+            },
+          },
+        });
+        document.getElementById('hourly-section').style.display = 'block';
+      }
+    } catch (err) {
+      console.error('[loadStats] Failed:', err);
+    }
+  }
+
+  // Loads full history from the SQLite-backed /history API and renders the table
+  async function loadHistory() {
+    const empty = document.getElementById('history-empty');
+    const wrap  = document.getElementById('history-table-wrap');
+
+    empty.textContent   = 'Loading history\u2026';
+    empty.style.display = 'block';
+    wrap.style.display  = 'none';
+
+    try {
+      const res = await fetch('http://127.0.0.1:5001/history');
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const records = await res.json();
+
+      if (!Array.isArray(records) || records.length === 0) {
+        empty.textContent = 'No history found.';
+        return;
+      }
+
+      // Show newest first
+      records.reverse();
+
+      const items = records.map(r => ({
+        time:       r.timestamp || r.time || '—',
+        amount:     r.amount,
+        prediction: r.prediction,
+        riskLevel:  r.risk_level || (r.prediction === 'suspicious' ? 'HIGH RISK' : 'LOW RISK'),
+        score:      r.anomaly_score != null ? Number(r.anomaly_score).toFixed(4) : '—',
+      }));
+
+      renderHistory(items);
+    } catch (err) {
+      console.error('[loadHistory] Failed:', err);
+      empty.textContent   = 'Could not load history. Is the API running?';
+      empty.style.display = 'block';
+      wrap.style.display  = 'none';
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────────
+  // Reset
+  // ─────────────────────────────────────────────────────────────────
+  function resetForm() {
+    for (const [id, val] of Object.entries(DEFAULTS)) {
+      document.getElementById(id).value = val;
+    }
+    document.getElementById('result-card').style.display = 'none';
+    clearStatus();
+  }
+
+  // Auto health-check + history + stats on page load
+  checkHealth();
+  loadHistory();
+  loadStats();
+
+  // Auto-refresh history and stats every 5 seconds
+  setInterval(() => { loadHistory(); loadStats(); }, 5000);
+</script>
+</body>
+</html>
