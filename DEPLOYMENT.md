@@ -1,262 +1,253 @@
-# Deployment Guide — Mobile Money Fraud Detection API
+# Deployment Guide
 
-## Overview
+**AI-Driven Mobile Money Fraud Detection System**
 
-The system has two independently deployable components:
-
-| Component                | Technology     | Default Port          |
-| ------------------------ | -------------- | --------------------- |
-| **Fraud Detection API**  | Python · Flask | 5001                  |
-| **Monitoring Dashboard** | Static HTML    | any (open in browser) |
-
-Both can run on a single low-cost Linux server (e.g., a DigitalOcean Droplet, AWS EC2 t3.micro, or an on-campus Ubuntu VM).
+This guide walks you through deploying both the Flask backend API and the static dashboard frontend on [Render](https://render.com).
 
 ---
 
-## Prerequisites
+## Architecture Overview
 
-| Requirement         | Version      |
-| ------------------- | ------------ |
-| Python              | 3.9 or later |
-| pip                 | latest       |
-| (Optional) gunicorn | latest       |
-| (Optional) nginx    | latest       |
+| Component               | Type          | Technology     | Render Service Type |
+| ----------------------- | ------------- | -------------- | ------------------- |
+| **Fraud Detection API** | Backend       | Python · Flask | **Web Service**     |
+| **Dashboard Frontend**  | Monitoring UI | Static HTML/JS | **Static Site**     |
 
----
-
-## Option A — Local / Development (Windows or Linux)
-
-```bash
-# 1. Clone or copy the project
-cd mobile-money-fraud-detection
-
-# 2. Create a virtual environment
-python -m venv .venv
-
-# 3. Activate it
-.venv\Scripts\activate          # Windows PowerShell
-# source .venv/bin/activate     # macOS / Linux
-
-# 4. Install Python dependencies
-pip install -r ml/requirements.txt
-
-# 5. Run Feature Engineering (only needed once, or when raw data changes)
-cd ml
-python feature_engineering.py
-
-# 6. Start the API
-python predict_api.py
-# → http://localhost:5001
-
-# 7. Open the dashboard
-# Open ml/dashboard.html in Chrome/Firefox — no server needed.
-```
+The dashboard (a single HTML file) calls the Flask API for predictions, history, and stats.
 
 ---
 
-## Option B — Production on Linux (Ubuntu 22.04)
+## Part 1 — Deploy the Flask Backend (Render Web Service)
 
-### Step 1 — Server Setup
+### 1.1 Prerequisites
 
-```bash
-sudo apt update && sudo apt upgrade -y
-sudo apt install python3 python3-pip python3-venv nginx -y
-```
+Before deploying, make sure your repository includes:
 
-### Step 2 — Upload Project Files
+| File                  | Purpose                                         |
+| --------------------- | ----------------------------------------------- |
+| `ml/requirements.txt` | Python dependencies (Flask, scikit-learn, etc.) |
+| `ml/predict_api.py`   | Flask application entry point                   |
+| `ml/db_helper.py`     | SQLite helper (creates `fraud_monitor.db`)      |
+| `ml/model/`           | Trained Isolation Forest model files (`.pkl`)   |
+| `ml/data/`            | Training data and engineered features           |
 
-```bash
-# From your local machine (replace IP with your server's address)
-scp -r mobile-money-fraud-detection/ ubuntu@YOUR_SERVER_IP:/opt/fraud-api/
-```
+### 1.2 Create the Web Service on Render
 
-### Step 3 — Python Environment
+1. Go to [dashboard.render.com](https://dashboard.render.com) → **New** → **Web Service**
+2. Connect your GitHub repository
+3. Configure the service:
 
-```bash
-cd /opt/fraud-api
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r ml/requirements.txt
-pip install gunicorn
-```
+| Setting            | Value                                             |
+| ------------------ | ------------------------------------------------- |
+| **Name**           | `mobile-money-fraud-api` (or your preferred name) |
+| **Region**         | Choose the closest to your users                  |
+| **Branch**         | `main`                                            |
+| **Root Directory** | `ml`                                              |
+| **Runtime**        | `Python 3`                                        |
+| **Build Command**  | `pip install -r requirements.txt`                 |
+| **Start Command**  | `gunicorn predict_api:app`                        |
 
-### Step 4 — Run Feature Engineering & Train Model
+### 1.3 Environment Variables
 
-```bash
-cd /opt/fraud-api/ml
-python feature_engineering.py
-python train_model.py
-```
+Add these in the Render dashboard under **Environment**:
 
-### Step 5 — Start the API with gunicorn
+| Variable      | Value   | Required | Description                    |
+| ------------- | ------- | -------- | ------------------------------ |
+| `PORT`        | `10000` | No       | Render sets this automatically |
+| `FLASK_DEBUG` | `false` | No       | Keep `false` in production     |
 
-```bash
-cd /opt/fraud-api/ml
-gunicorn --workers 2 --bind 0.0.0.0:5001 predict_api:app
-```
+> Render automatically assigns a `PORT` environment variable. The `predict_api.py` reads it with:
+>
+> ```python
+> port = int(os.environ.get("PORT", 5001))
+> ```
 
-For persistent background operation, create a **systemd service**:
+### 1.4 Health Check
 
-```ini
-# /etc/systemd/system/fraud-api.service
+| Setting               | Value     |
+| --------------------- | --------- |
+| **Health Check Path** | `/health` |
 
-[Unit]
-Description=Mobile Money Fraud Detection API
-After=network.target
+The `/health` endpoint returns:
 
-[Service]
-User=ubuntu
-WorkingDirectory=/opt/fraud-api/ml
-Environment="ML_PORT=5001"
-ExecStart=/opt/fraud-api/.venv/bin/gunicorn --workers 2 --bind 0.0.0.0:5001 predict_api:app
-Restart=always
-
-[Install]
-WantedBy=multi-user.target
-```
-
-```bash
-sudo systemctl daemon-reload
-sudo systemctl enable fraud-api
-sudo systemctl start fraud-api
-sudo systemctl status fraud-api
-```
-
-### Step 6 — nginx Reverse Proxy (optional but recommended)
-
-```nginx
-# /etc/nginx/sites-available/fraud-api
-
-server {
-    listen 80;
-    server_name your-domain.com;   # or your server's IP
-
-    # API proxy
-    location /api/ {
-        proxy_pass         http://127.0.0.1:5001/;
-        proxy_set_header   Host $host;
-        proxy_set_header   X-Real-IP $remote_addr;
-    }
-
-    # Static dashboard
-    location / {
-        root /opt/fraud-api/ml;
-        try_files /dashboard.html =404;
-    }
+```json
+{
+  "status": "ok",
+  "model": "Isolation Forest",
+  "detection_type": "Unsupervised Anomaly Detection",
+  "features": ["amount", "balance_before", "..."],
+  "total_predictions": 42
 }
 ```
 
-```bash
-sudo ln -s /etc/nginx/sites-available/fraud-api /etc/nginx/sites-enabled/
-sudo nginx -t
-sudo systemctl reload nginx
+### 1.5 API Endpoints Available After Deployment
+
+| Method | Endpoint   | Description                      |
+| ------ | ---------- | -------------------------------- |
+| GET    | `/health`  | API status and model info        |
+| POST   | `/predict` | Submit a transaction for scoring |
+| GET    | `/history` | Retrieve all prediction history  |
+| GET    | `/stats`   | Aggregate fraud statistics       |
+| GET    | `/export`  | Download predictions as CSV      |
+
+Your backend URL will look like:
+
 ```
-
-> **HTTPS:** Add a free TLS certificate with `sudo certbot --nginx -d your-domain.com`.
-
----
-
-## Option C — Docker (cross-platform)
-
-Create `ml/Dockerfile`:
-
-```dockerfile
-FROM python:3.11-slim
-
-WORKDIR /app
-COPY . .
-
-RUN pip install --no-cache-dir -r ml/requirements.txt gunicorn
-
-WORKDIR /app/ml
-RUN python feature_engineering.py
-
-EXPOSE 5001
-CMD ["gunicorn", "--workers", "2", "--bind", "0.0.0.0:5001", "predict_api:app"]
-```
-
-```bash
-# Build
-docker build -t fraud-api .
-
-# Run
-docker run -d -p 5001:5001 --name fraud-api fraud-api
-
-# Persist predictions.db across restarts
-docker run -d -p 5001:5001 \
-  -v $(pwd)/ml/data:/app/ml/data \
-  --name fraud-api fraud-api
+https://mobile-money-fraud-api.onrender.com
 ```
 
 ---
 
-## Environment Variables
+## Part 2 — Deploy the Dashboard (Render Static Site)
 
-| Variable       | Default                   | Description                                  |
-| -------------- | ------------------------- | -------------------------------------------- |
-| `ML_PORT`      | `5001`                    | Port the Flask/gunicorn server listens on    |
-| `DATABASE_URL` | `sqlite:///momo_fraud.db` | SQLAlchemy URL for the source transaction DB |
+### 2.1 File Structure
 
----
+The dashboard is a single self-contained HTML file located at:
 
-## Dashboard Configuration
+```
+ml/
+├── index.html          ← deploy this (or dashboard.html)
+```
 
-The dashboard reads the API from a hardcoded `API_BASE` variable near the top of the `<script>` block in `ml/dashboard.html`:
+Both `index.html` and `dashboard.html` are identical. Render Static Sites serve `index.html` by default.
+
+### 2.2 Connect the Dashboard to Your Backend
+
+Before deploying, open `ml/index.html` and set `API_BASE` to your deployed backend URL:
 
 ```js
-const API_BASE = "http://127.0.0.1:5001"; // ← change this for production
+const API_BASE = "https://mobile-money-fraud-api.onrender.com";
+//               ↑ Replace with your actual Render Web Service URL
 ```
 
-For production, change it to your server's address:
+> This single constant controls all API calls (`/health`, `/predict`, `/history`, `/stats`, `/export`).
 
-```js
-const API_BASE = "https://your-domain.com/api";
+### 2.3 Create the Static Site on Render
+
+1. Go to [dashboard.render.com](https://dashboard.render.com) → **New** → **Static Site**
+2. Connect the same GitHub repository
+3. Configure:
+
+| Setting               | Value                                  |
+| --------------------- | -------------------------------------- |
+| **Name**              | `fraud-detection-dashboard`            |
+| **Branch**            | `main`                                 |
+| **Root Directory**    | `ml`                                   |
+| **Build Command**     | _(leave blank — no build step needed)_ |
+| **Publish Directory** | `.`                                    |
+
+4. Click **Create Static Site**
+
+Your dashboard will be live at:
+
+```
+https://fraud-detection-dashboard.onrender.com
 ```
 
 ---
 
-## Verifying the Deployment
+## Part 3 — Verify the Deployment
+
+### 3.1 Check the Backend
 
 ```bash
 # Health check
-curl http://localhost:5001/health
+curl https://mobile-money-fraud-api.onrender.com/health
 
-# Test prediction
-curl -X POST http://localhost:5001/predict \
+# Test a prediction
+curl -X POST https://mobile-money-fraud-api.onrender.com/predict \
   -H "Content-Type: application/json" \
   -d '{
-    "amount": 8000, "balance_before": 8500, "balance_after": 500,
-    "sim_swap_flag": 1, "txn_hour": 2, "amount_zscore": 3.2,
-    "txn_time_deviation": 9.5, "balance_drain_ratio": 0.94,
-    "is_new_device": 1, "is_new_location": 1, "velocity_1day": 7
+    "amount": 8000,
+    "balance_before": 8500,
+    "balance_after": 500,
+    "sim_swap_flag": 1,
+    "txn_hour": 2,
+    "amount_zscore": 3.2,
+    "txn_time_deviation": 9.5,
+    "balance_drain_ratio": 0.94,
+    "is_new_device": 1,
+    "is_new_location": 1,
+    "velocity_1day": 7
   }'
 
-# Check stats
-curl http://localhost:5001/stats
-
-# Download history CSV
-curl http://localhost:5001/export -o predictions.csv
+# Fetch stats
+curl https://mobile-money-fraud-api.onrender.com/stats
 ```
 
----
+### 3.2 Check the Dashboard
 
-## Security Checklist (before going live)
+Open your Static Site URL in a browser. You should see:
 
-- [ ] Add API key authentication to all routes (Flask-HTTPAuth or a simple `X-API-Key` header check)
-- [ ] Restrict CORS in `predict_api.py` to allowed origins instead of `*`
-- [ ] Enable HTTPS with a valid TLS certificate (Let's Encrypt / certbot)
-- [ ] Set `debug=False` in production (gunicorn handles this automatically)
-- [ ] Restrict `/export` to authenticated administrators only
-- [ ] Back up `data/predictions.db` regularly (cron job → offsite storage)
-- [ ] Set server firewall rules: allow only ports 80, 443, and 22
+- **API Health** → green "API is running" status
+- **Transaction Form** → submit a test and see the prediction result
+- **Recent Transactions** → table populates from `/history`
+- **Fraud Summary** → KPI boxes update from `/stats`
 
 ---
 
-## Performance Notes
+## Common Deployment Errors & Fixes
 
-| Scenario          | Recommendation                                                                                           |
-| ----------------- | -------------------------------------------------------------------------------------------------------- |
-| < 100 req/min     | gunicorn with 2 workers is sufficient                                                                    |
-| 100–1,000 req/min | Increase workers to `2 × CPU cores + 1`; add nginx caching                                               |
-| > 1,000 req/min   | Migrate to PostgreSQL; add Redis queue; deploy multiple API replicas behind a load balancer              |
-| Batch scoring     | Use `predict_api.py` as a library and call `predict()` directly from a Python script instead of via HTTP |
+| Error                                          | Cause                                     | Fix                                                                                                                                    |
+| ---------------------------------------------- | ----------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `ModuleNotFoundError: No module named 'flask'` | Missing dependency                        | Ensure `requirements.txt` is in the **Root Directory** (`ml/`) and the Build Command is `pip install -r requirements.txt`              |
+| `FileNotFoundError: model/*.pkl`               | Model files not committed                 | Run `git add ml/model/ -f` and push — `.gitignore` may be excluding `.pkl` files                                                       |
+| `gunicorn: command not found`                  | gunicorn not in requirements              | Confirm `gunicorn==23.0.0` is listed in `ml/requirements.txt`                                                                          |
+| `CORS error` in browser console                | Backend doesn't allow dashboard origin    | `predict_api.py` uses `CORS(app)` which allows all origins — this should work. If you restrict origins later, add your Static Site URL |
+| Dashboard shows "API unreachable"              | Wrong `API_BASE` URL                      | Open `ml/index.html`, update `API_BASE` to your actual Render Web Service URL, commit and push                                         |
+| `/health` returns 502 Bad Gateway              | App failed to start                       | Check Render **Logs** tab — usually a missing file or import error                                                                     |
+| Predictions disappear after redeploy           | SQLite is ephemeral on Render (see below) | Expected on free tier — consider upgrading to a persistent disk or PostgreSQL                                                          |
+
+---
+
+## Important: SQLite Limitations on Render
+
+Render Web Services use an **ephemeral filesystem**. This means:
+
+- The SQLite database (`ml/data/fraud_monitor.db`) is **created fresh** on every deploy or restart
+- All prediction history stored in SQLite **will be lost** when the service redeploys
+- This is a known limitation of Render's free tier
+
+### What this means for your project
+
+For **academic demos and presentations**, this is perfectly fine — the database works during the session and predictions are stored while the service is running.
+
+### If you need persistent data later
+
+| Option                     | Effort | Description                                                                          |
+| -------------------------- | ------ | ------------------------------------------------------------------------------------ |
+| **Render Persistent Disk** | Low    | Attach a disk to the Web Service ($0.25/GB/mo) — SQLite file persists across deploys |
+| **PostgreSQL on Render**   | Medium | Create a free Render PostgreSQL database and update `db_helper.py` to use it         |
+| **External database**      | Medium | Use a cloud database like MongoDB Atlas or Supabase                                  |
+
+---
+
+## Local Development (Quick Reference)
+
+```bash
+# Clone the repo
+git clone https://github.com/antann07/mobile-money-fraud-detection.git
+cd mobile-money-fraud-detection
+
+# Create and activate virtual environment
+python -m venv .venv
+.venv\Scripts\activate          # Windows
+# source .venv/bin/activate     # macOS / Linux
+
+# Install dependencies
+pip install -r ml/requirements.txt
+
+# Start the API locally
+cd ml
+python predict_api.py
+# → http://localhost:5001
+
+# Open the dashboard
+# Open ml/dashboard.html in your browser
+```
+
+For local development, change `API_BASE` back to:
+
+```js
+const API_BASE = "http://127.0.0.1:5001";
+```

@@ -19,4 +19,3 @@ sqlalchemy==2.0.36
 # Utilities
 python-dotenv==1.0.1
 gunicorn==23.0.0
-0 

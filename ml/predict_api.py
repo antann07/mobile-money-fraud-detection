@@ -410,11 +410,12 @@ def export_csv():
 # ---------------------------------------------------------------------------
 
 if __name__ == "__main__":
-    port = int(os.environ.get("ML_PORT", 5001))
+    port = int(os.environ.get("PORT", 5001))
+    debug = os.environ.get("FLASK_DEBUG", "false").lower() == "true"
     print(f"  Fraud Detection API  →  http://localhost:{port}")
     print("  POST /predict        — analyse a transaction")
     print("  GET  /history        — full prediction log")
     print("  GET  /stats          — aggregate analytics")
     print("  GET  /export         — download CSV")
     print("  GET  /health         — health check\n")
-    app.run(host="0.0.0.0", port=port, debug=True)
+    app.run(host="0.0.0.0", port=port, debug=debug)
