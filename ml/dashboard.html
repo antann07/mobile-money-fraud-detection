@@ -381,6 +381,7 @@
       margin-bottom: 20px;
     }
     @media (max-width: 640px) { .fraud-summary { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 640px) { #analytics-charts > div { grid-template-columns: 1fr !important; } }
     @media (max-width: 480px) { .fraud-summary { grid-template-columns: 1fr; } }
     .fs-box {
       border-radius: 10px;
@@ -398,14 +399,126 @@
     .fs-box.rate      { border-color: #fed7aa; background: #fff7ed; }
     .fs-box.rate .fs-value { color: #c2410c; }
 
+    /* ── Login Screen ────────────────────────────────────── */
+    #login-screen {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 80vh;
+    }
+    .login-card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 40px 36px;
+      box-shadow: 0 4px 24px rgba(0,0,0,.10);
+      width: 100%;
+      max-width: 380px;
+    }
+    .login-card h2 {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #0f172a;
+      text-align: center;
+      margin-bottom: 6px;
+    }
+    .login-card .login-subtitle {
+      text-align: center;
+      font-size: .84rem;
+      color: #64748b;
+      margin-bottom: 24px;
+    }
+    .login-card .field { display: flex; flex-direction: column; gap: 5px; margin-bottom: 16px; }
+    .login-card label { font-size: .75rem; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: .5px; }
+    .login-card input[type="text"],
+    .login-card input[type="password"] {
+      padding: 10px 14px;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 8px;
+      font-size: .9rem;
+      color: #1e293b;
+      background: #fff;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .login-card input:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59,130,246,.15);
+    }
+    .login-card .btn-login {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 9px;
+      font-size: .95rem;
+      font-weight: 700;
+      cursor: pointer;
+      background: linear-gradient(135deg, #1d4ed8, #1e3a5f);
+      color: #fff;
+      transition: opacity .2s;
+      margin-top: 4px;
+    }
+    .login-card .btn-login:hover { opacity: .88; }
+    .login-card .btn-login:disabled { opacity: .5; cursor: not-allowed; }
+    .login-error {
+      display: none;
+      margin-top: 12px;
+      padding: 9px 14px;
+      border-radius: 8px;
+      font-size: .84rem;
+      background: #fee2e2;
+      color: #b91c1c;
+      text-align: center;
+    }
+    /* Logout button in header */
+    .btn-logout {
+      padding: 7px 18px;
+      border: 1.5px solid rgba(255,255,255,.3);
+      border-radius: 8px;
+      font-size: .8rem;
+      font-weight: 600;
+      color: #fff;
+      background: transparent;
+      cursor: pointer;
+      transition: background .2s, border-color .2s;
+    }
+    .btn-logout:hover { background: rgba(255,255,255,.12); border-color: rgba(255,255,255,.5); }
+
   </style>
 </head>
 <body>
 
+<!-- Login Screen (shown when not authenticated) -->
+<div id="login-screen" style="display:none;">
+  <div class="login-card">
+    <h2>&#128274; Admin Login</h2>
+    <p class="login-subtitle">Sign in to access the fraud detection dashboard</p>
+    <form id="login-form" onsubmit="login(event)">
+      <div class="field">
+        <label for="username">Username</label>
+        <input id="username" type="text" placeholder="Enter username" required />
+      </div>
+      <div class="field">
+        <label for="password">Password</label>
+        <input id="password" type="password" placeholder="Enter password" required />
+      </div>
+      <button type="submit" class="btn-login" id="btn-login">Log In</button>
+    </form>
+    <div id="login-error" class="login-error"></div>
+  </div>
+</div>
+
+<!-- Dashboard (shown when authenticated) -->
+<div id="dashboard" style="display:none;">
+
 <!-- Header -->
 <header>
-  <h1>Mobile Money Fraud Detection Dashboard</h1>
-  <p>AI-powered unauthorized withdrawal detection &mdash; Isolation Forest &middot; Explainable AI</p>
+  <div style="display:flex; align-items:center; justify-content:space-between; max-width:900px; margin:0 auto;">
+    <div>
+      <h1>Mobile Money Fraud Detection Dashboard</h1>
+      <p>AI-powered unauthorized withdrawal detection &mdash; Isolation Forest &middot; Explainable AI</p>
+    </div>
+    <button class="btn-logout" onclick="handleLogout()">&#9109; Logout</button>
+  </div>
 </header>
 
 <div class="container">
@@ -590,7 +703,7 @@
         <button onclick="loadStats()" style="padding:6px 14px; font-size:.8rem; border-radius:8px; background:#6366f1; color:#fff; border:none; cursor:pointer; font-weight:600;">&#128208; Stats</button>
         <a id="export-link" href="#" target="_blank"
            style="padding:6px 14px; font-size:.8rem; border-radius:8px; background:#10b981; color:#fff; border:none; cursor:pointer; font-weight:600; text-decoration:none;">&#8595; Download Fraud Report</a>
-        <button onclick="loadHistory()" style="padding:6px 14px; font-size:.8rem; border-radius:8px; background:#3b82f6; color:#fff; border:none; cursor:pointer; font-weight:600;">&#8635; Refresh</button>
+        <button onclick="refreshDashboardData()" style="padding:6px 14px; font-size:.8rem; border-radius:8px; background:#3b82f6; color:#fff; border:none; cursor:pointer; font-weight:600;">&#8635; Refresh</button>
       </div>
     </div>
 
@@ -636,6 +749,21 @@
       <h3 style="font-size:.85rem; text-transform:uppercase; letter-spacing:.5px; color:#475569; margin-bottom:10px;">Suspicious Transactions by Hour of Day</h3>
       <canvas id="hourlyChart" height="70"></canvas>
     </div>
+
+    <!-- Pie chart + Line chart row -->
+    <div id="analytics-charts" style="display:none; margin-bottom:22px;">
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:18px;">
+        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:14px 16px;">
+          <h3 style="font-size:.85rem; text-transform:uppercase; letter-spacing:.5px; color:#475569; margin-bottom:10px;">Fraud vs Normal Distribution</h3>
+          <div style="max-width:260px; margin:0 auto;"><canvas id="pieChart"></canvas></div>
+        </div>
+        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:14px 16px;">
+          <h3 style="font-size:.85rem; text-transform:uppercase; letter-spacing:.5px; color:#475569; margin-bottom:10px;">Anomaly Score Trend</h3>
+          <canvas id="lineChart" height="140"></canvas>
+        </div>
+      </div>
+    </div>
+
     <div id="history-empty">Loading history&hellip;</div>
     <div id="history-table-wrap" style="display:none; overflow-x:auto;">
       <table class="txn-table" id="history-table">
@@ -685,11 +813,86 @@
 
 <footer>Mobile Money Fraud Detection &mdash; Isolation Forest &middot; SHAP Explainability</footer>
 
+</div><!-- /#dashboard -->
+
 <script>
   // ─────────────────────────────────────────────────────────────────
-  // Configuration
+  // Configuration — Environment-Aware API Base URL
   // ─────────────────────────────────────────────────────────────────
-  const API_BASE = 'https://fraud-detection-api-pdul.onrender.com';
+  // Automatically detects whether you're running locally or in production.
+  //
+  // LOCAL  → http://127.0.0.1:5001   (Flask dev server, http is fine)
+  // LIVE   → https://fraud-detection-api-pdul.onrender.com  (https required)
+  //
+  // This means you never need to manually edit API_BASE.
+  const IS_LOCAL = ['localhost', '127.0.0.1'].includes(window.location.hostname);
+  const API_BASE = IS_LOCAL
+    ? 'http://127.0.0.1:5001'
+    : 'https://fraud-detection-api-pdul.onrender.com';
+
+  console.log(`[Config] Environment: ${IS_LOCAL ? 'LOCAL' : 'PRODUCTION'}  →  ${API_BASE}`);
+
+  // Auth — token is stored in localStorage after login
+  function getToken() { return localStorage.getItem('fraud_auth_token'); }
+
+  // Called when any API request returns 401
+  function handleUnauthorized() {
+    localStorage.removeItem('fraud_auth_token');
+    showLogin();
+    const errEl = document.getElementById('login-error');
+    errEl.textContent = 'Session expired or unauthorized. Please log in again.';
+    errEl.style.display = 'block';
+  }
+
+  // ─────────────────────────────────────────────────────────────────
+  // apiFetch — Reusable helper for all API calls
+  // ─────────────────────────────────────────────────────────────────
+  // Usage:
+  //   const data = await apiFetch('/predict', { method: 'POST', body: JSON.stringify(payload) });
+  //
+  // What it does:
+  //   1. Prefixes API_BASE to the path automatically
+  //   2. Adds Content-Type: application/json header
+  //   3. Adds Authorization: Bearer <token> if logged in
+  //   4. Handles 401 responses by forcing logout
+  //   5. Parses JSON and throws a clear error on failure
+  async function apiFetch(path, options = {}) {
+    const url = `${API_BASE}${path}`;
+
+    // Build headers: always include JSON content type + auth token
+    const headers = {
+      'Content-Type': 'application/json',
+      ...(options.headers || {}),
+    };
+    const token = getToken();
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    // Make the request
+    const res = await fetch(url, { ...options, headers });
+
+    // Handle unauthorized — force re-login
+    if (res.status === 401) {
+      handleUnauthorized();
+      throw new Error('Unauthorized — please log in again.');
+    }
+
+    // Try to parse JSON (some endpoints like /export return non-JSON)
+    const contentType = res.headers.get('content-type') || '';
+    if (!contentType.includes('application/json')) {
+      if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+      return res;   // return raw Response for non-JSON (e.g., CSV export)
+    }
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.details || data.error || `HTTP ${res.status}`);
+    }
+
+    return data;
+  }
 
   const DEFAULTS = {
     amount: 8000, balance_before: 4000, balance_after: 0,
@@ -752,14 +955,9 @@
     const box = document.getElementById('health-result');
     box.className = ''; box.textContent = 'Checking API health…';
     try {
-      const res  = await fetch(`${API_BASE}/health`);
-      const data = await res.json();
-      if (res.ok) {
-        box.className   = 'ok';
-        box.textContent = `✓ API is running · ${data.model || 'unknown'} · status: ${data.status || 'ok'}`;
-      } else {
-        throw new Error(data.error || `HTTP ${res.status}`);
-      }
+      const data = await apiFetch('/health');
+      box.className   = 'ok';
+      box.textContent = `✓ API is running · ${data.model || 'unknown'} · status: ${data.status || 'ok'}`;
     } catch (err) {
       box.className   = 'error';
       box.textContent = `✗ API unreachable at ${API_BASE} — ${err.message}`;
@@ -784,22 +982,15 @@
     }
 
     try {
-      const res  = await fetch(`${API_BASE}/predict`, {
+      const data = await apiFetch('/predict', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
-      const data = await res.json();
       console.log('[predictFraud] API response:', data);
-
-      if (!res.ok) {
-        setStatus(`API error: ${data.details || data.error || res.statusText}`, 'error');
-        return;
-      }
-
       renderResult(data, payload);
 
     } catch (err) {
+      console.error('[predictFraud] Error:', err);
       setStatus(
         `Could not reach the API at ${API_BASE}. Make sure the Flask server is running.`,
         'error'
@@ -1119,6 +1310,8 @@
   }
 
   let hourlyInst = null;   // Chart.js instance for hourly bar chart
+  let pieInst    = null;   // Chart.js instance for fraud/normal pie chart
+  let lineInst   = null;   // Chart.js instance for anomaly score trend
 
   function updateSummary(items) {
     // Lightweight local update used when local history[] array changes.
@@ -1139,9 +1332,7 @@
   // Fetch aggregate stats from /stats and update all KPI boxes + hourly chart
   async function loadStats() {
     try {
-      const res  = await fetch(`${API_BASE}/stats`);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const s = await res.json();
+      const s = await apiFetch('/stats');
 
       document.getElementById('fs-total').textContent      = s.total;
       document.getElementById('fs-suspicious').textContent = s.suspicious;
@@ -1152,6 +1343,32 @@
       document.getElementById('fs-24h').textContent        = s.recent_24h.suspicious;
 
       document.getElementById('fraud-summary').style.display = 'block';
+
+      // ── Pie chart: Fraud vs Normal ──────────────────────────────
+      if (s.total > 0) {
+        const pieCtx = document.getElementById('pieChart').getContext('2d');
+        if (pieInst) pieInst.destroy();
+        pieInst = new Chart(pieCtx, {
+          type: 'doughnut',
+          data: {
+            labels: ['Suspicious', 'Normal'],
+            datasets: [{
+              data: [s.suspicious || 0, s.normal || 0],
+              backgroundColor: ['#fca5a5', '#86efac'],
+              borderColor: ['#dc2626', '#16a34a'],
+              borderWidth: 2,
+            }],
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: { position: 'bottom', labels: { font: { size: 12, weight: '600' } } },
+              tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.parsed} (${((ctx.parsed / s.total) * 100).toFixed(1)}%)` } },
+            },
+          },
+        });
+        document.getElementById('analytics-charts').style.display = 'block';
+      }
 
       // Draw hourly bar chart if data is available
       if (s.hourly_counts && s.hourly_counts.length > 0) {
@@ -1203,18 +1420,14 @@
     wrap.style.display  = 'none';
 
     try {
-      const res = await fetch(`${API_BASE}/history`);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const records = await res.json();
+      const records = await apiFetch('/history');
 
       if (!Array.isArray(records) || records.length === 0) {
         empty.textContent = 'No history found.';
         return;
       }
 
-      // Show newest first
-      records.reverse();
-
+      // API already returns newest first (ORDER BY id DESC)
       const items = records.map(r => ({
         time:       r.timestamp || r.time || '—',
         amount:     r.amount,
@@ -1224,6 +1437,45 @@
       }));
 
       renderHistory(items);
+
+      // ── Line chart: Anomaly Score Trend ──────────────────────────
+      // Use oldest → newest for the trend line (reverse the API order)
+      const chronological = records.slice().reverse();
+      const lineLabels = chronological.map((r, i) => r.timestamp ? r.timestamp.split(' ')[1] || `#${i+1}` : `#${i+1}`);
+      const lineData   = chronological.map(r => r.anomaly_score != null ? Number(r.anomaly_score) : 0);
+
+      const lineCtx = document.getElementById('lineChart').getContext('2d');
+      if (lineInst) lineInst.destroy();
+      lineInst = new Chart(lineCtx, {
+        type: 'line',
+        data: {
+          labels: lineLabels,
+          datasets: [{
+            label: 'Anomaly Score',
+            data: lineData,
+            borderColor: '#6366f1',
+            backgroundColor: 'rgba(99,102,241,.1)',
+            fill: true,
+            tension: 0.3,
+            pointRadius: 2,
+            pointBackgroundColor: lineData.map(v => v < 0 ? '#dc2626' : '#16a34a'),
+            borderWidth: 2,
+          }],
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { display: false },
+            tooltip: { callbacks: { label: ctx => ` Score: ${ctx.parsed.y.toFixed(4)}` } },
+          },
+          scales: {
+            x: { grid: { display: false }, ticks: { font: { size: 9 }, maxTicksLimit: 12 } },
+            y: { grid: { color: '#f1f5f9' }, ticks: { font: { size: 10 } } },
+          },
+        },
+      });
+      document.getElementById('analytics-charts').style.display = 'block';
+
     } catch (err) {
       console.error('[loadHistory] Failed:', err);
       empty.textContent   = 'Could not load history. Is the API running?';
@@ -1243,16 +1495,105 @@
     clearStatus();
   }
 
-  // Set export link dynamically from API_BASE
-  document.getElementById('export-link').href = `${API_BASE}/export`;
+  // ─────────────────────────────────────────────────────────────────
+  // Refresh all dashboard data (stats + history + charts)
+  // ─────────────────────────────────────────────────────────────────
+  function refreshDashboardData() {
+    loadStats();
+    loadHistory();
+  }
 
-  // Auto health-check + history + stats on page load
-  checkHealth();
-  loadHistory();
-  loadStats();
+  // Export CSV via fetch with auth (plain <a> links can't send headers)
+  document.getElementById('export-link').addEventListener('click', async function(e) {
+    e.preventDefault();
+    try {
+      const res = await apiFetch('/export');
+      const blob = await res.blob();
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href = url; a.download = 'fraud_predictions.csv';
+      document.body.appendChild(a); a.click(); a.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      alert('Export failed: ' + err.message);
+    }
+  });
 
-  // Auto-refresh history and stats every 5 seconds
-  setInterval(() => { loadHistory(); loadStats(); }, 5000);
+  // ─────────────────────────────────────────────────────────────────
+  // Login / Logout
+  // ─────────────────────────────────────────────────────────────────
+  async function login(event) {
+    if (event) event.preventDefault();
+    const btn   = document.getElementById('btn-login');
+    const errEl = document.getElementById('login-error');
+    errEl.style.display = 'none';
+    btn.disabled = true;
+    btn.textContent = 'Signing in…';
+
+    console.log('[Login] API_BASE:', API_BASE);
+
+    const payload = {
+      username: document.getElementById('username').value.trim(),
+      password: document.getElementById('password').value.trim(),
+    };
+    console.log('[Login] Payload:', payload);
+
+    try {
+      // Login uses apiFetch — token is not set yet, so no auth header is added
+      const data = await apiFetch('/login', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+
+      console.log('[Login] Response:', data);
+
+      if (data.token) {
+        localStorage.setItem('fraud_auth_token', data.token);
+        showDashboard();
+      } else {
+        errEl.textContent = data.error || 'Invalid credentials';
+        errEl.style.display = 'block';
+      }
+    } catch (err) {
+      console.error('[Login] Failed:', err);
+      errEl.textContent = 'Could not reach the server. Is the API running?';
+      errEl.style.display = 'block';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Log In';
+    }
+  }
+
+  function handleLogout() {
+    localStorage.removeItem('fraud_auth_token');
+    showLogin();
+  }
+
+  function showDashboard() {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('dashboard').style.display = 'block';
+    checkHealth();
+    refreshDashboardData();
+  }
+
+  function showLogin() {
+    document.getElementById('dashboard').style.display = 'none';
+    document.getElementById('login-screen').style.display = 'flex';
+    document.getElementById('login-form').reset();
+    document.getElementById('login-error').style.display = 'none';
+  }
+
+  // ─────────────────────────────────────────────────────────────────
+  // Page load — check for existing token
+  // ─────────────────────────────────────────────────────────────────
+  if (getToken()) {
+    showDashboard();
+  } else {
+    showLogin();
+  }
+
+  // Auto-refresh stats, charts, and history every 10 seconds (only runs when dashboard is visible)
+  setInterval(() => { if (getToken()) refreshDashboardData(); }, 10000);
 </script>
 </body>
 </html>

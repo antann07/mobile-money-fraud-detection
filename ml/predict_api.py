@@ -40,12 +40,16 @@ import numpy as np
 import pandas as pd
 from pathlib import Path
 from datetime import datetime
+from functools import wraps
 from flask import Flask, request, jsonify, Response
 from flask_cors import CORS
 from sklearn.ensemble import IsolationForest
 
 # SQLite helpers from db_helper
-from db_helper import init_db, save_prediction_to_db, get_prediction_history, DB_PATH
+from db_helper import init_db, save_prediction, get_history, get_stats, DB_PATH
+
+# Email & SMS alert helpers
+from alerts import send_email_alert, send_sms_alert
 
 # ---------------------------------------------------------------------------
 # Configuration
@@ -209,6 +213,53 @@ CORS(app)   # allow requests from any origin (e.g. the dashboard)
 init_db()
 
 
+# ---------------------------------------------------------------------------
+# Authentication
+# ---------------------------------------------------------------------------
+
+# Hardcoded admin credentials (suitable for a student project / demo)
+ADMIN_USERNAME = "admin"
+ADMIN_PASSWORD = "admin123"
+AUTH_TOKEN     = "simple-admin-token"
+
+
+def require_auth(f):
+    """
+    Decorator that protects a route.
+    The client must send:  Authorization: Bearer simple-admin-token
+    If the header is missing or wrong, return 401.
+    """
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        auth_header = request.headers.get("Authorization", "")
+        if auth_header == f"Bearer {AUTH_TOKEN}":
+            return f(*args, **kwargs)
+        return jsonify({"error": "Unauthorized", "details": "Missing or invalid token. Please log in first."}), 401
+    return decorated
+
+
+@app.route("/login", methods=["POST"])
+def login():
+    """
+    Authenticate an admin user.
+
+    Request  (JSON):  { "username": "admin", "password": "admin123" }
+    Success  (200):   { "message": "Login successful", "token": "simple-admin-token" }
+    Failure  (401):   { "error": "Invalid credentials" }
+    """
+    data = request.get_json(silent=True)
+    if not data:
+        return jsonify({"error": "Bad request", "details": "Request body must be valid JSON."}), 400
+
+    username = data.get("username", "")
+    password = data.get("password", "")
+
+    if username == ADMIN_USERNAME and password == ADMIN_PASSWORD:
+        return jsonify({"message": "Login successful", "token": AUTH_TOKEN})
+
+    return jsonify({"error": "Invalid credentials"}), 401
+
+
 @app.route("/", methods=["GET"])
 def index():
     return jsonify({"message": "Mobile Money Fraud Detection API is running"})
@@ -230,6 +281,7 @@ def health():
 
 
 @app.route("/predict", methods=["POST"])
+@require_auth
 def predict():
     """
     Analyse one transaction and return a fraud prediction.
@@ -295,29 +347,49 @@ def predict():
         "risk_level":          risk_level,
         "explanation":         explanation,
     }
-    save_prediction_to_db(record)
+    save_prediction(record)
+
+    # ── Alerts for suspicious transactions ─────────────────────────
+    email_sent = False
+    sms_sent   = False
+
+    if prediction == "suspicious":
+        alert_data = {
+            "timestamp":     record["timestamp"],
+            "amount":        record["amount"],
+            "prediction":    prediction,
+            "risk_level":    risk_level,
+            "anomaly_score": round(anomaly_score, 6),
+            "explanation":   explanation,
+        }
+        email_sent = send_email_alert(alert_data)
+        sms_sent   = send_sms_alert(alert_data)
 
     return jsonify({
-        "prediction":    prediction,
-        "anomaly_label": anomaly_label,
-        "anomaly_score": round(anomaly_score, 6),
-        "risk_level":    risk_level,
-        "explanation":   explanation,
+        "prediction":       prediction,
+        "anomaly_label":    anomaly_label,
+        "anomaly_score":    round(anomaly_score, 6),
+        "risk_level":       risk_level,
+        "explanation":      explanation,
+        "email_alert_sent": email_sent,
+        "sms_alert_sent":   sms_sent,
     })
 
 
 @app.route("/history", methods=["GET"])
+@require_auth
 def history():
     """
     Return prediction history from SQLite (newest first).
-    Uses get_prediction_history() from db_helper.
+    Uses get_history() from db_helper.
     Returns an empty JSON list if no history exists.
     """
-    rows = get_prediction_history()
+    rows = get_history()
     return jsonify(rows)
 
 
 @app.route("/stats", methods=["GET"])
+@require_auth
 def stats():
     """
     Aggregate statistics for the monitoring dashboard.
@@ -381,6 +453,7 @@ def stats():
 
 
 @app.route("/export", methods=["GET"])
+@require_auth
 def export_csv():
     """
     Export the full prediction history as a downloadable CSV file.
@@ -413,9 +486,10 @@ if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5001))
     debug = os.environ.get("FLASK_DEBUG", "false").lower() == "true"
     print(f"  Fraud Detection API  →  http://localhost:{port}")
-    print("  POST /predict        — analyse a transaction")
-    print("  GET  /history        — full prediction log")
-    print("  GET  /stats          — aggregate analytics")
-    print("  GET  /export         — download CSV")
-    print("  GET  /health         — health check\n")
+    print("  POST /login          — authenticate (public)")
+    print("  POST /predict        — analyse a transaction (auth required)")
+    print("  GET  /history        — full prediction log (auth required)")
+    print("  GET  /stats          — aggregate analytics (auth required)")
+    print("  GET  /export         — download CSV (auth required)")
+    print("  GET  /health         — health check (public)\n")
     app.run(host="0.0.0.0", port=port, debug=debug)

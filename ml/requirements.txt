@@ -19,3 +19,7 @@ sqlalchemy==2.0.36
 # Utilities
 python-dotenv==1.0.1
 gunicorn==23.0.0
+
+# Alerts (Twilio SendGrid + SMS)
+sendgrid==6.12.5
+twilio==9.10.4

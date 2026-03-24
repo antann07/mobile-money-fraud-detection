@@ -1,12 +1,17 @@
 """
 db_helper.py — SQLite helper for fraud prediction history
 ==========================================================
-Provides three simple functions used by withdrawal_api.py
-(and any other script that needs to read/write prediction history):
+Provides simple functions used by predict_api.py, withdrawal_api.py,
+and any other script that needs to read/write prediction history:
 
     init_db()                  — create the database and table
-    save_prediction_to_db()    — insert one prediction record
-    get_prediction_history()   — fetch all records (newest first)
+    save_prediction(record)    — insert one prediction record
+    get_history(limit=None)    — fetch records as list of dicts (newest first)
+    get_stats()                — return summary statistics
+
+Backward-compatible aliases:
+    save_prediction_to_db      — same as save_prediction
+    get_prediction_history     — same as get_history
 
 Database file : ml/data/fraud_monitor.db
 Table         : prediction_history
@@ -69,10 +74,10 @@ def init_db():
 
 
 # ---------------------------------------------------------------------------
-# 2.  save_prediction_to_db(record)
+# 2.  save_prediction(record)
 # ---------------------------------------------------------------------------
 
-def save_prediction_to_db(record: dict):
+def save_prediction(record: dict):
     """
     Insert one prediction record into the prediction_history table.
 
@@ -127,14 +132,23 @@ def save_prediction_to_db(record: dict):
         conn.commit()
 
 
+# Backward-compatible alias
+save_prediction_to_db = save_prediction
+
+
 # ---------------------------------------------------------------------------
-# 3.  get_prediction_history()
+# 3.  get_history(limit=None)
 # ---------------------------------------------------------------------------
 
-def get_prediction_history() -> list[dict]:
+def get_history(limit=None) -> list[dict]:
     """
-    Return every row in prediction_history as a list of plain dicts,
+    Return rows from prediction_history as a list of plain dicts,
     ordered newest first (highest id first).
+
+    Parameters
+    ----------
+    limit : int or None
+        Maximum number of rows to return.  None means return all.
 
     Returns
     -------
@@ -144,18 +158,67 @@ def get_prediction_history() -> list[dict]:
 
     Example
     -------
-        rows = get_prediction_history()
+        rows = get_history(limit=50)
         for row in rows:
             print(row["timestamp"], row["prediction"], row["anomaly_score"])
     """
-    with sqlite3.connect(str(DB_PATH)) as conn:
-        conn.row_factory = sqlite3.Row   # lets us convert rows to dicts easily
-        rows = conn.execute(
-            "SELECT * FROM prediction_history ORDER BY id DESC"
-        ).fetchall()
+    query = "SELECT * FROM prediction_history ORDER BY id DESC"
+    params = ()
 
-    # Convert sqlite3.Row objects to plain Python dicts
+    if limit is not None:
+        query += " LIMIT ?"
+        params = (int(limit),)
+
+    with sqlite3.connect(str(DB_PATH)) as conn:
+        conn.row_factory = sqlite3.Row
+        rows = conn.execute(query, params).fetchall()
+
     return [dict(row) for row in rows]
+
+
+# Backward-compatible alias
+get_prediction_history = get_history
+
+
+# ---------------------------------------------------------------------------
+# 4.  get_stats()
+# ---------------------------------------------------------------------------
+
+def get_stats() -> dict:
+    """
+    Return a summary of all predictions stored in the database.
+
+    Returns
+    -------
+    dict with keys:
+        total_predictions  — number of rows
+        suspicious_count   — rows where prediction == 'suspicious'
+        normal_count       — rows where prediction != 'suspicious'
+        fraud_rate         — suspicious_count / total  (0.0 if no rows)
+        avg_anomaly_score  — average anomaly_score     (0.0 if no rows)
+    """
+    with sqlite3.connect(str(DB_PATH)) as conn:
+        row = conn.execute("""
+            SELECT
+                COUNT(*)                                            AS total,
+                SUM(CASE WHEN prediction = 'suspicious' THEN 1 ELSE 0 END) AS suspicious,
+                AVG(anomaly_score)                                  AS avg_score
+            FROM prediction_history
+        """).fetchone()
+
+    total      = row[0] or 0
+    suspicious = row[1] or 0
+    normal     = total - suspicious
+    fraud_rate = round(suspicious / total, 4) if total > 0 else 0.0
+    avg_score  = round(row[2], 6) if row[2] is not None else 0.0
+
+    return {
+        "total_predictions": total,
+        "suspicious_count":  suspicious,
+        "normal_count":      normal,
+        "fraud_rate":        fraud_rate,
+        "avg_anomaly_score": avg_score,
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -171,7 +234,7 @@ if __name__ == "__main__":
     init_db()
 
     # 2. Insert a test record
-    save_prediction_to_db({
+    save_prediction({
         "timestamp":           datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "amount":              8000.0,
         "balance_before":      8500.0,
@@ -192,8 +255,12 @@ if __name__ == "__main__":
     })
     print("  Test record inserted.")
 
-    # 3. Read back
-    history = get_prediction_history()
-    print(f"  Records in database: {len(history)}")
+    # 3. Read back (with limit)
+    history = get_history(limit=5)
+    print(f"  Records returned: {len(history)}")
     print(f"  Latest record: {history[0]}")
+
+    # 4. Stats
+    stats = get_stats()
+    print(f"  Stats: {stats}")
     print("Self-test passed.")
