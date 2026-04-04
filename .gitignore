@@ -27,6 +27,10 @@ logs/
 uploads/
 flask_backend/uploads/
 
+# ── Generated / backup files ────────────────────
+*.bak
+ml/data/engineered_features.csv
+
 # ── OS files ─────────────────────────────────────
 .DS_Store
 Thumbs.db
