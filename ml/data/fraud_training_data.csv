@@ -1,100 +1,21 @@
-amount,transactionType,transactionDirection,hourOfDay,isWeekend,verificationStatus,trustLevel,availableForUse,blocked,hasLinkedSource,label
-500,deposit,incoming,9,0,verified,trusted,1,0,0,0
-200,transfer_out,outgoing,14,0,verified,trusted,1,0,0,0
-100,transfer_in,incoming,8,0,verified,trusted,1,0,0,0
-350,transfer_out,outgoing,15,0,verified,trusted,1,0,0,0
-2000,cashin,incoming,11,0,verified,trusted,1,0,0,0
-600,cashout,outgoing,9,0,verified,trusted,1,0,0,0
-250,cashout,outgoing,14,0,verified,trusted,1,0,0,0
-300,transfer_in,incoming,16,0,verified,trusted,1,0,0,0
-800,deposit,incoming,13,0,verified,trusted,1,0,0,0
-150,transfer_out,outgoing,8,0,verified,trusted,1,0,0,0
-400,deposit,incoming,10,1,verified,trusted,1,0,0,0
-75,transfer_out,outgoing,12,1,verified,trusted,1,0,0,0
-180,cashin,incoming,15,0,verified,trusted,1,0,0,0
-90,cashout,outgoing,11,0,verified,trusted,1,0,0,0
-1200,cashin,incoming,10,0,verified,trusted,1,0,0,0
-50,transfer_out,outgoing,17,0,verified,trusted,1,0,0,0
-320,deposit,incoming,14,0,verified,trusted,1,0,0,0
-280,transfer_in,incoming,9,1,verified,trusted,1,0,0,0
-650,cashout,outgoing,16,0,verified,trusted,1,0,0,0
-120,transfer_out,outgoing,13,0,verified,trusted,1,0,0,0
-1500,deposit,incoming,10,0,verified,trusted,1,0,0,0
-45,transfer_out,outgoing,11,0,verified,trusted,1,0,0,0
-700,cashin,incoming,8,0,verified,trusted,1,0,0,0
-230,cashout,outgoing,15,1,verified,trusted,1,0,0,0
-500,transfer_in,incoming,12,0,verified,trusted,1,0,0,0
-60,transfer_out,outgoing,9,0,verified,trusted,1,0,0,0
-340,deposit,incoming,14,0,verified,trusted,1,0,0,0
-160,cashin,incoming,16,0,verified,trusted,1,0,0,0
-420,transfer_out,outgoing,10,0,verified,trusted,1,0,0,0
-85,cashout,outgoing,13,0,verified,trusted,1,0,0,0
-550,deposit,incoming,11,1,verified,trusted,1,0,0,0
-200,transfer_in,incoming,15,0,verified,trusted,1,0,0,0
-110,transfer_out,outgoing,17,0,verified,trusted,1,0,0,0
-950,cashin,incoming,9,0,verified,trusted,1,0,0,0
-380,cashout,outgoing,14,0,verified,trusted,1,0,0,0
-15000,deposit,incoming,11,0,suspicious,high_risk,0,0,0,1
-14500,withdrawal,outgoing,11,0,suspicious,high_risk,0,1,1,1
-8500,deposit,incoming,2,0,suspicious,high_risk,0,0,0,1
-8000,transfer_out,outgoing,2,0,suspicious,high_risk,0,1,1,1
-400,cashout,outgoing,3,0,suspicious,high_risk,0,1,1,1
-450,transfer_out,outgoing,6,0,unverified,warning,1,0,0,1
-480,transfer_out,outgoing,6,0,suspicious,warning,1,0,0,1
-420,transfer_out,outgoing,7,0,suspicious,high_risk,1,0,0,1
-490,transfer_out,outgoing,7,0,suspicious,high_risk,0,1,0,1
-12000,deposit,incoming,1,1,suspicious,high_risk,0,0,0,1
-10000,transfer_out,outgoing,1,1,suspicious,high_risk,0,1,1,1
-6500,deposit,incoming,3,0,suspicious,high_risk,0,0,0,1
-5800,withdrawal,outgoing,3,0,suspicious,high_risk,0,1,1,1
-350,transfer_out,outgoing,4,0,suspicious,warning,1,0,0,1
-380,transfer_out,outgoing,4,0,suspicious,warning,1,0,0,1
-370,transfer_out,outgoing,5,0,suspicious,high_risk,0,1,0,1
-9200,deposit,incoming,23,0,suspicious,high_risk,0,0,0,1
-8800,cashout,outgoing,23,0,suspicious,high_risk,0,1,1,1
-20000,deposit,incoming,2,1,suspicious,high_risk,0,0,0,1
-19500,transfer_out,outgoing,2,1,suspicious,high_risk,0,1,1,1
-440,transfer_out,outgoing,5,0,unverified,warning,1,0,0,1
-460,transfer_out,outgoing,5,0,suspicious,high_risk,0,1,0,1
-7000,deposit,incoming,0,0,suspicious,high_risk,0,0,0,1
-6200,withdrawal,outgoing,0,0,suspicious,high_risk,0,1,1,1
-3000,deposit,incoming,4,0,suspicious,high_risk,0,0,0,1
-2800,cashout,outgoing,4,0,suspicious,high_risk,0,1,1,1
-130,deposit,incoming,7,0,verified,trusted,1,0,0,0
-450,transfer_out,outgoing,10,0,verified,trusted,1,0,0,0
-275,cashin,incoming,13,1,verified,trusted,1,0,0,0
-180,cashout,outgoing,16,0,verified,trusted,1,0,0,0
-620,deposit,incoming,9,0,verified,trusted,1,0,0,0
-310,transfer_in,incoming,11,0,verified,trusted,1,0,0,0
-55,transfer_out,outgoing,14,0,verified,trusted,1,0,0,0
-1800,cashin,incoming,10,0,verified,trusted,1,0,0,0
-95,cashout,outgoing,12,1,verified,trusted,1,0,0,0
-430,deposit,incoming,15,0,verified,trusted,1,0,0,0
-170,transfer_out,outgoing,8,0,verified,trusted,1,0,0,0
-240,transfer_in,incoming,17,0,verified,trusted,1,0,0,0
-520,cashin,incoming,11,0,verified,trusted,1,0,0,0
-350,cashout,outgoing,14,1,verified,trusted,1,0,0,0
-780,deposit,incoming,9,0,verified,trusted,1,0,0,0
-140,transfer_out,outgoing,13,0,verified,trusted,1,0,0,0
-1100,cashin,incoming,10,0,verified,trusted,1,0,0,0
-290,cashout,outgoing,16,0,verified,trusted,1,0,0,0
-460,deposit,incoming,11,1,verified,trusted,1,0,0,0
-200,transfer_in,incoming,8,0,verified,trusted,1,0,0,0
-330,transfer_out,outgoing,15,0,verified,trusted,1,0,0,0
-680,cashin,incoming,9,0,verified,trusted,1,0,0,0
-105,cashout,outgoing,12,0,verified,trusted,1,0,0,0
-4500,deposit,incoming,3,0,suspicious,high_risk,0,0,0,1
-4200,transfer_out,outgoing,3,0,suspicious,high_risk,0,1,1,1
-11000,deposit,incoming,1,0,suspicious,high_risk,0,0,0,1
-10500,withdrawal,outgoing,1,0,suspicious,high_risk,0,1,1,1
-390,transfer_out,outgoing,6,0,unverified,warning,1,0,0,1
-410,transfer_out,outgoing,6,0,suspicious,warning,1,0,0,1
-430,transfer_out,outgoing,7,0,suspicious,high_risk,0,1,0,1
-16000,deposit,incoming,0,1,suspicious,high_risk,0,0,0,1
-15200,cashout,outgoing,0,1,suspicious,high_risk,0,1,1,1
-5500,deposit,incoming,22,0,suspicious,high_risk,0,0,0,1
-5000,transfer_out,outgoing,22,0,suspicious,high_risk,0,1,1,1
-360,transfer_out,outgoing,5,0,suspicious,warning,1,0,0,1
-470,transfer_out,outgoing,5,0,suspicious,high_risk,0,1,0,1
-210,deposit,incoming,12,0,verified,trusted,1,0,0,0
-480,transfer_out,outgoing,10,1,verified,trusted,1,0,0,0
+id,raw_text,label,source_type,transaction_type,direction,amount,fee,balance_after,available_balance,counterparty_name,transaction_id,reference,has_valid_mtn_format,has_balance_info,has_fee_info,has_transaction_id,has_sender_name,has_character_anomaly,has_spacing_anomaly,has_urgency_language,notes
+1,"You have received GHS 150.00 from KWAME MENSAH 0241234567. Transaction ID: 9384710236. Fee charged: GHS 0.00. E-levy: GHS 1.50. Your new balance is GHS 1,248.50. 15/03/2026 09:32.",genuine,sms_paste,transfer,incoming,150.00,0.00,1248.50,1248.50,KWAME MENSAH,9384710236,,1,1,1,1,1,0,0,0,Canonical incoming transfer. E-levy = 1% of 150. All 7 expected fields present.
+2,"Cash In of GHS 200.00 at agent ISAAC DARKO 0201567893. Transaction ID: 1029384756. Your new balance is GHS 450.00. 17/03/2026 11:03.",genuine,sms_paste,deposit,incoming,200.00,0.00,450.00,450.00,ISAAC DARKO,1029384756,,1,1,0,1,1,0,0,0,Cash-in at agent. No fee/e-levy line (cash-in exempt). Standard MTN deposit template.
+3,"You have received GHS 500.00 from ABENA OWUSU 0271098762. Transaction ID: 5647382917. Fee charged: GHS 0.00. E-levy: GHS 5.00. Your new balance is GHS 2,335.00. 18/03/2026 08:44.",genuine,sms_paste,transfer,incoming,500.00,0.00,2335.00,2335.00,ABENA OWUSU,5647382917,,1,1,1,1,1,0,0,0,Standard transfer. E-levy = 1% of 500 = 5.00. Comma-formatted balance.
+4,"Payment of GHS 45.00 received from KOFI ASANTE 0541236789. Transaction ID: 2910485738. Fee charged: GHS 0.00. E-levy: GHS 0.00. Your new balance is GHS 1,095.00. 19/03/2026 16:22.",genuine,sms_paste,payment,incoming,45.00,0.00,1095.00,1095.00,KOFI ASANTE,2910485738,,1,1,1,1,1,0,0,0,"Payment template opener. Under GHS 100 so e-levy = 0. All fields correct."
+5,"You have received GHS 1,200.00 from EMMANUEL TETTEH 0261234589. Transaction ID: 8392017483. Fee charged: GHS 0.00. E-levy: GHS 12.00. Your new balance is GHS 3,488.00. 20/03/2026 10:05.",genuine,sms_paste,transfer,incoming,1200.00,0.00,3488.00,3488.00,EMMANUEL TETTEH,8392017483,,1,1,1,1,1,0,0,0,Large transfer. E-levy = 1% of 1200 = 12.00. Comma-formatted amounts throughout.
+6,"You have received GHS 37.80 from GIFTY LAMPTEY 0501234578. Transaction ID: 4728193054. Fee charged: GHS 0.00. E-levy: GHS 0.00. Your new balance is GHS 122.30. 20/03/2026 13:28.",genuine,sms_paste,transfer,incoming,37.80,0.00,122.30,122.30,GIFTY LAMPTEY,4728193054,,1,1,1,1,1,0,0,0,Non-round pesewa amount typical of real MoMo usage. Under 100 so e-levy = 0.
+7,"You have received GHS 350.00 from YAW ADJEI 0241098763. Transaction ID: 9182736453. Fee charged: GHS 0.00. E-levy: GHS 3.50. Your new balance is GHS 696.50. 21/03/2026 07:14.",genuine,sms_paste,transfer,incoming,350.00,0.00,696.50,696.50,YAW ADJEI,9182736453,,1,1,1,1,1,0,0,0,E-levy = 1% of 350 = 3.50. Balance math: 350.00 + 350.00 - 3.50 = 696.50.
+8,"Cash In of GHS 500.00 at agent MERCY AGYEMANG 0551098762. Transaction ID: 5648291734. Your new balance is GHS 500.00. 21/03/2026 17:48.",genuine,sms_paste,deposit,incoming,500.00,0.00,500.00,500.00,MERCY AGYEMANG,5648291734,,1,1,0,1,1,0,0,0,Cash-in at agent. Balance = amount means wallet was empty before. No fee block (normal).
+9,"You have received GHS 75.50 from AMA BOATENG 0551987432. Transaction ID: 8472910348. Fee charged: GHS 0.00. E-levy: GHS 0.00. Your new balance is GHS 830.50. 16/03/2026 14:17.",genuine,sms_paste,transfer,incoming,75.50,0.00,830.50,830.50,AMA BOATENG,8472910348,,1,1,1,1,1,0,0,0,Small transfer with pesewa value. Under GHS 100 so e-levy = 0. All fields present.
+10,"You have sent GHS 60.00 to FRANCIS MENSAH 0241009988. Transaction ID: 6617283940. Fee charged: GHS 0.50. E-levy: GHS 0.00. Your new balance is GHS 439.50. 22/03/2026 09:55.",genuine,sms_paste,transfer,outgoing,60.00,0.50,439.50,439.50,FRANCIS MENSAH,6617283940,,1,1,1,1,1,0,0,0,"Outgoing transfer ('You have sent'). Sender-side fee = 0.50. Under 100 so e-levy = 0."
+11,"You have received GHC 300.00 from SAMUEL OFORI 0241009876. Transaction ID: 7281930456. Fee charged: GHC 0.00. E-levy: GHC 3.00. Your new balance is GHC 985.00. 22/03/2026 11:30.",suspicious,sms_paste,transfer,incoming,300.00,0.00,985.00,985.00,SAMUEL OFORI,7281930456,,0,1,1,1,1,0,0,0,"Uses 'GHC' instead of 'GHS' throughout. GHC was replaced in the 2007 redenomination. Otherwise structurally correct — likely a scam template that was never updated."
+12,"You have received GHS 800.00 from RACHEL APPIAH 0241002233. Ref: TXN882910. Fee charged: GHS 0.00. E-levy: GHS 0.00. Your new balance is GHS 1,520.00. 23/03/2026 12:40.",suspicious,sms_paste,transfer,incoming,800.00,0.00,1520.00,1520.00,RACHEL APPIAH,,,1,1,1,0,1,0,0,0,"Contains 'Ref:' field — real MTN uses 'Transaction ID:' not 'Ref:'. E-levy = 0 on GHS 800 transfer (should be ~8.00). Two subtle inconsistencies."
+13,"E-levy: GHS 2.50. Fee charged: GHS 0.00. You have received GHS 250.00 from PATRICK BOADU 0551234568. Transaction ID: 3847201956. Your new balance is GHS 600.00. 23/03/2026 08:15.",suspicious,sms_paste,transfer,incoming,250.00,0.00,600.00,600.00,PATRICK BOADU,3847201956,,0,1,1,1,1,0,0,0,"E-levy and Fee lines appear before the message body. MTN always prints Fee then E-levy after the balance line. Reversed field order suggests manual composition."
+14,"You have recieved GHS 400.00 from Lydia Mensah 0201556677. Transaction ID: 28391047562. Fee charged: GHS 0.00. E-levy: GHS 4.00. Your new balance is GHS 1,100.00. 23/03/2026 14:40.",suspicious,sms_paste,transfer,incoming,400.00,0.00,1100.00,1100.00,Lydia Mensah,28391047562,,0,1,1,1,1,0,0,0,"Misspelling 'recieved'. Sender name in Title Case (MTN renders ALL CAPS). E-levy = 1% correct. Two soft anomalies that together raise doubt."
+15,"Cash receive of GHS 180.00 from DANIEL ASARE 0241008877. Transaction ID: 5573829104. Your balance is GHS 730.00. 24/03/2026 15:10.",suspicious,sms_paste,deposit,incoming,180.00,0.00,730.00,730.00,DANIEL ASARE,5573829104,,0,1,0,1,1,0,0,0,"Opener says 'Cash receive' — MTN says 'Cash In of'. Single anomaly but in the most fingerprint-sensitive field (opener phrase)."
+16,"Dear Customer you have received GHS 5,000.00 into your MoMo wallet. Transaction was sent in error. Kindly return GHS 4,500.00 to 0241000111 before it is reversed. Failure to comply will result in reversal and your account being blocked.",likely_fraudulent,sms_paste,transfer,incoming,5000.00,0.00,0.00,0.00,,,,0,0,0,0,0,0,0,1,"Return-money scam. 'Dear Customer' greeting (MTN never uses). 'sent in error' + 'failure to comply' + 'account being blocked' = stacked urgency. No txn ID balance or sender."
+17,"MTN MoMo: Your account has been b'locked due to unusual transaction activity. Call our verification line at 0551234567 immediately to avoid permanent suspension. Provide your MoMo PIN and date of birth to verify.",likely_fraudulent,sms_paste,unknown,incoming,0.00,0.00,0.00,0.00,,,,0,0,0,0,0,1,0,1,"Account-block scam. 'b'locked' homoglyph evasion to bypass keyword filters. Requests PIN + date of birth. 'MTN MoMo:' colon prefix is a known scam pattern. No transaction details."
+18,"You have received GHS 2,500.00 from JOHN MENSAH. Your MoMo PIN is required to release your funds. This transaction will expire within 24 hours if not confirmed. Dial *170# now.",likely_fraudulent,sms_paste,transfer,incoming,2500.00,0.00,0.00,0.00,JOHN MENSAH,,,0,0,0,0,1,0,0,1,"PIN harvesting. Opens like a real notification then requests PIN. 'expire within 24 hours' urgency. No txn ID or balance. Sender name present to add false credibility."
+19,"You have received GHS 3,000.00 from MERCHANT SERVICES. Do not attempt your PIN. This amount has been credited to your acount by the MTN Foundation. Contact 0209876543 for verification before using funds.",likely_fraudulent,sms_paste,transfer,incoming,3000.00,0.00,0.00,0.00,MERCHANT SERVICES,,,0,0,0,0,1,0,0,1,"'credited' is bank language not MTN. Misspelling 'acount'. 'Do not attempt your PIN' is a known scam threat. 'MTN Foundation' and 'MERCHANT SERVICES' are fake entities. No txn ID or balance."
+20,"Congrats! You have won GHS 10,000.00 in the MTN Mobile Money: Anniversary Draw! To claim send GHS 200.00 activation fee to agent 0241112233. Offer expires today. Your secret code: 5839. Do not share.",likely_fraudulent,sms_paste,unknown,incoming,10000.00,0.00,0.00,0.00,,,,0,0,0,0,0,0,0,1,"Advance-fee prize scam. 'MTN Mobile Money:' colon prefix. Requests GHS 200 'activation fee'. 'secret code' mimics OTP. 'expires today' urgency. No txn ID or balance."

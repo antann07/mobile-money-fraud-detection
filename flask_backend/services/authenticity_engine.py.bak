@@ -1,0 +1,910 @@
+"""
+Authenticity Engine v6.0 — Phase 7 Part 3B calibration refinement.
+
+RECALIBRATION GOAL (v6.0):
+  Maximize genuine-bias for messages matching known MTN structure.
+  Optional-field penalties reduced to near-zero.  Scam wording and
+  broken authenticity patterns carry even stronger penalties.
+
+Three weighted components decide whether an SMS is genuine, suspicious,
+or likely fraudulent:
+
+  1. TEXT AUTHENTICITY  (weight 0.60)  — primary decision driver
+     Checks the raw SMS against the canonical MTN machine-generated
+     template and scans for scam-specific language.
+     v6.0: trust bonus at -0.20 and "genuine lock" forces text_risk
+     to 0.0 when core markers pass with no fraud flags.
+
+  2. STRUCTURAL CONSISTENCY  (weight 0.35)  — strong supporting signal
+     Verifies parsed fields form a valid transaction.
+     v6.0: structural cap widened (text_risk ≤ 0.15) — parser quirks
+     never influence the verdict when text is reasonably clean.
+
+  3. BEHAVIOR  (weight 0.05)  — soft confirming signal only
+     Compares the transaction against user history.
+     Behaviour CANNOT override a text+structure verdict.
+
+Decision thresholds on the weighted composite:
+  genuine            composite ≤ 0.30
+  suspicious         0.30 < composite ≤ 0.45
+  likely_fraudulent  composite > 0.45
+
+Calibration principles (v6.0)
+  - Genuine-first bias: when core MTN markers (opener + balance + txn ID)
+    are present, a trust bonus (-0.20) plus the genuine lock ensure
+    optional-field gaps NEVER flip a genuine message to suspicious.
+  - A single weak anomaly (missing datetime, blank reference, new sender,
+    slight parser miss) ALWAYS stays genuine.
+  - Suspicious requires MORE THAN ONE clear anomaly — not optional-
+    field gaps or parser misses.
+  - Likely-fraudulent requires strong scam signals (urgency, PIN request,
+    wrong wording, character manipulation) or multiple stacked clear
+    fraud indicators.
+  - Fraud penalties carry the heaviest weights — scam phrases, urgency
+    language, PIN requests, and homoglyphs are decisive.
+
+Output keys match the contract in message_check_service.py:
+  predicted_label, confidence_score, explanation,
+  format_risk_score, behavior_risk_score,
+  balance_consistency_score, sender_novelty_score, model_version
+"""
+
+import re
+
+
+# ═══════════════════════════════════════════════════════════════
+# Constants
+# ═══════════════════════════════════════════════════════════════
+
+MODEL_VERSION = "v6.0-rule-based"
+
+# ── Component weights (sum = 1.0) ──
+_W_TEXT       = 0.60   # text authenticity — primary
+_W_STRUCTURE  = 0.35   # structural consistency — strong support
+_W_BEHAVIOR   = 0.05   # user behaviour — confirming signal only
+
+# ── Classification thresholds (on the weighted composite) ──
+# v6.0: genuine band widened to 0.30.  Combined with the trust bonus
+# (-0.20), the genuine lock, and the structural cap (text_risk ≤ 0.15),
+# real MTN messages with optional-field gaps comfortably stay genuine.
+_THRESHOLD_GENUINE    = 0.30   # composite ≤ 0.30 → genuine
+_THRESHOLD_SUSPICIOUS = 0.45   # 0.30 < composite ≤ 0.45 → suspicious
+                               # composite > 0.45 → likely_fraudulent
+
+# ── Ghana mobile phone prefixes (MTN + other networks for interop) ──
+_GHANA_MOBILE_PREFIXES = {
+    "020", "023", "024", "025", "026", "027", "028",
+    "050", "053", "054", "055", "056", "057", "059",
+}
+
+# ── Canonical MTN MoMo opening phrases (case-insensitive) ──
+# RECALIBRATION v5: expanded list from real MTN SMS patterns.
+# "Payment received" and "Cash In received" are genuine MTN openers
+# that v4 missed, causing false positives.
+_CANONICAL_OPENERS = [
+    "you have received",
+    "cash in of",
+    "cash in received",     # NEW v5 — real MTN cash-in format
+    "cash out of",          # NEW v5 — cash-out notification
+    "cash out to",          # NEW v5 — cash-out variant
+    "payment of",
+    "payment received",     # NEW v5 — real MTN payment format
+    "you have sent",
+    "you have transferred",
+    "you have paid",
+    "you have withdrawn",   # NEW v5 — withdrawal notification
+    "transfer of",          # NEW v5 — transfer notification
+    "withdrawal of",        # NEW v5 — withdrawal variant
+    "airtime of",
+]
+
+# ── Suspicious / non-MTN wording ──
+# Phrases that real MTN SMS never uses.
+# RECALIBRATION v5: added scam account-blocking language patterns.
+_SUSPICIOUS_PHRASES = [
+    "cash receive",       # bad grammar — MTN says "received" not "receive"
+    "credited",           # bank-style, not MTN
+    "has been made",      # passive voice scam template
+    "dear customer",      # MTN uses no greeting
+    "dear valued",
+    "kindly return",
+    "send back",
+    "sent in error",
+    "sent by mistake",
+    "confirm your identity",
+    "verify your account",
+    "call our verification",
+    "release your funds",
+    "mtn momo:",          # scam prefix (real MTN has no colon prefix)
+    "mtn mobile money:",  # another scam prefix
+    "has been b'lock",    # NEW v5 — scam block language with apostrophe
+    "has been block",     # NEW v5 — scam account block language
+    "don't attempt",      # NEW v5 — scam PIN/account threat
+    "do not attempt",     # NEW v5 — variant threat language
+    "merchant report",    # NEW v5 — fake merchant report scam
+    "by the mtn",         # NEW v5 — awkward grammar in scam messages
+]
+
+# ── Urgency / manipulation keywords ──
+# RECALIBRATION v5: added "b'lock" apostrophe evasion variant.
+_URGENCY_WORDS = [
+    "immediately", "urgent", "urgently", "expire", "act now",
+    "within 24", "within 48", "account being blocked",
+    "will be blocked", "avoid", "failure to", "result in reversal",
+    "suspended", "locked",
+    "b'lock",             # NEW v5 — apostrophe evasion of "block"
+]
+
+# ── PIN / credential harvesting keywords ──
+# RECALIBRATION v5: added specific scam PIN-threat patterns.
+_PIN_REQUEST_WORDS = [
+    "your pin", "momo pin", "your password", "your otp",
+    "date of birth", "dob", "secret code",
+    "attempt your pin",   # NEW v5 — scam PIN threat pattern
+]
+
+# ── Known misspellings found in scam messages ──
+_KNOWN_MISSPELLINGS = [
+    "recieved", "recevied", "recived",
+    "acount", "acccount",
+    "maintanance", "maintenace",
+    "transfered", "transafer",
+    "deposite",
+]
+
+# ── Per-violation weights for template checks ──
+# v6.0: hard fraud indicators at highest levels.  Soft/optional-field
+# penalties reduced to near-zero — the trust bonus (-0.15) plus the
+# genuine lock make them irrelevant when core markers pass.
+_VIOLATION_WEIGHTS = {
+    # Hard violations — strong fraud indicators
+    "no_canonical_opener": 0.30,     # message doesn't start like MTN
+    "no_balance_mention":  0.25,     # all real MTN SMS mention balance
+    "wrong_currency":      0.15,     # GHC instead of GHS
+    "wrong_field_order":   0.12,     # E-levy before Fee (reversed)
+    "unexpected_ref_field": 0.10,    # "Ref:" never appears in real MTN
+
+    # Medium violations — notable but not conclusive alone
+    "missing_txn_id_label": 0.06,    # "Transaction ID:" absent
+    "elevy_math_wrong":    0.06,     # E-levy=0 on a >GHS100 transfer
+
+    # Soft violations — near-zero; the trust bonus (-0.20) fully
+    # absorbs these when core markers pass, and the genuine lock
+    # forces risk to 0.0 when no fraud flags fire.
+    "missing_fee_elevy_text": 0.002, # no fee/e-levy text
+    "non_standard_txn_id": 0.005,    # ID present but unusual format
+    "no_datetime":         0.002,    # many real MTN SMS lack timestamps
+    "name_not_all_caps":   0.002,    # edge cases exist in real msgs
+}
+# Note: misspellings are handled separately at 0.12 per occurrence.
+
+# ── Compiled regexes ──
+# Field ordering: Real MTN always prints "Fee charged: …" BEFORE "E-levy: …".
+_FEE_BEFORE_ELEVY_RE = re.compile(
+    r"Fee\s+charged.*?E-?levy", re.IGNORECASE | re.DOTALL
+)
+_ELEVY_BEFORE_FEE_RE = re.compile(
+    r"E-?levy.*?Fee\s+charged", re.IGNORECASE | re.DOTALL
+)
+
+# Transaction ID in raw text: "Transaction ID: XXXXXXXXXX"
+_RAW_TXN_ID_RE = re.compile(
+    r"Transaction\s+ID:\s*(\S+)", re.IGNORECASE
+)
+
+# Name after "from" followed by a Ghana phone number
+_NAME_PHONE_RE = re.compile(
+    r"from\s+([A-Za-z][A-Za-z\s]+?)\s+0[2-5]\d{8}"
+)
+
+# Unexpected "Ref:" field — real MTN never includes this
+# Note: "Reference:" (full word) is a legitimate MTN field and is NOT matched.
+_REF_FIELD_RE = re.compile(r"\bRef:\s*\S+", re.IGNORECASE)
+
+# Datetime in DD/MM/YYYY HH:MM format
+_DATETIME_RE = re.compile(r"\d{2}/\d{2}/\d{4}\s+\d{2}:\d{2}")
+
+# Wrong currency code
+_WRONG_CURRENCY_RE = re.compile(r"\bGHC\b")
+
+# Spacing anomalies
+_MULTI_SPACE_RE = re.compile(r"[ ]{2,}")
+_TAB_RE = re.compile(r"\t")
+
+# Parser's Transaction ID — purely numeric, 10-11 digits
+# RECALIBRATION v5: expanded from 10 → 10-11 digits.  Real MTN
+# transaction IDs (e.g. 78319906534) can be 11 digits.
+_PURE_NUMERIC_RE = re.compile(r"^\d{10,11}$")           # [v4: ^\d{10}$]
+
+
+# ═══════════════════════════════════════════════════════════════
+# 1a. CANONICAL TEMPLATE VALIDATOR
+# ═══════════════════════════════════════════════════════════════
+# Genuine MTN SMS are machine-generated and follow an exact template.
+# RECALIBRATION v5: each violation is individually weighted via
+# _VIOLATION_WEIGHTS so that minor format quirks (missing datetime,
+# slightly different ID length) don't cascade into false positives.
+
+def _validate_canonical_template(raw_text: str, parsed: dict) -> list[str]:
+    """
+    Check how closely the message matches the canonical MTN SMS template.
+
+    Returns a list of violation strings.  Empty list = perfect match.
+    """
+    violations: list[str] = []
+    text = raw_text.strip()
+    text_lower = text.lower()
+
+    # ── V1. Canonical opener ──
+    # RECALIBRATION v5: expanded opener list now includes "payment received",
+    # "cash in received", etc.  This alone fixes the biggest false-positive
+    # source from v4.
+    if not any(text_lower.startswith(op) for op in _CANONICAL_OPENERS):
+        violations.append("no_canonical_opener")
+
+    # ── V2. Transaction ID: present, labelled, 10-11 pure digits ──
+    # RECALIBRATION v5: real MTN IDs can be 10 or 11 digits (e.g.
+    # 78319906534 is 11 digits).  Expanded regex from ^\d{10}$ to
+    # ^\d{10,11}$ to prevent false positives on genuine IDs.
+    txn_match = _RAW_TXN_ID_RE.search(text)
+    if txn_match:
+        txn_val = txn_match.group(1).rstrip(".").rstrip(",")
+        if not re.match(r"^\d{10,11}$", txn_val):   # [v4: ^\d{10}$]
+            violations.append("non_standard_txn_id")
+    else:
+        violations.append("missing_txn_id_label")
+
+    # ── V3. Fee before E-levy ordering (when both are present) ──
+    has_both = (
+        _FEE_BEFORE_ELEVY_RE.search(text)
+        or _ELEVY_BEFORE_FEE_RE.search(text)
+    )
+    if (has_both
+            and _ELEVY_BEFORE_FEE_RE.search(text)
+            and not _FEE_BEFORE_ELEVY_RE.search(text)):
+        violations.append("wrong_field_order")
+
+    # ── V4. Name in ALL CAPS (raw-text check; parser can't extract names) ──
+    name_match = _NAME_PHONE_RE.search(text)
+    if name_match:
+        name_val = name_match.group(1).strip()
+        if name_val != name_val.upper():
+            violations.append("name_not_all_caps")
+
+    # ── V5. Balance mentioned ──
+    if "balance" not in text_lower:
+        violations.append("no_balance_mention")
+
+    # ── V6. Datetime present (DD/MM/YYYY HH:MM) ──
+    if not _DATETIME_RE.search(text):
+        violations.append("no_datetime")
+
+    # ── V7. E-levy math for transfers > GHS 100 ──
+    amount = parsed.get("amount")
+    tax = parsed.get("tax")
+    is_transfer = parsed.get("transaction_type") in ("transfer", "payment")
+    if is_transfer and amount is not None and amount > 100:
+        if tax is not None and tax == 0.0:
+            violations.append("elevy_math_wrong")
+
+    # ── V8. Fee/E-levy text present for transfers ──
+    # RECALIBRATION v5: now also recognises "transaction fee" which is
+    # used in real MTN messages like "TRANSACTION FEE: 0.00".
+    if is_transfer:
+        has_fee_text = (
+            "fee charged" in text_lower
+            or "transaction fee" in text_lower       # NEW v5
+        )
+        has_elevy_text = "e-levy" in text_lower or "e levy" in text_lower
+        if not has_fee_text and not has_elevy_text:
+            violations.append("missing_fee_elevy_text")
+
+    # ── V9. Unexpected fields — "Ref:" is never in real MTN SMS ──
+    # Note: "Reference:" (the full word) IS a valid MTN field and is
+    # not matched by this pattern.
+    if _REF_FIELD_RE.search(text):
+        violations.append("unexpected_ref_field")
+
+    # ── V10. Currency code — GHS not GHC ──
+    if _WRONG_CURRENCY_RE.search(text):
+        violations.append("wrong_currency")
+
+    # ── V11. Misspellings (machine-generated text has zero typos) ──
+    for misspelling in _KNOWN_MISSPELLINGS:
+        if misspelling in text_lower:
+            violations.append(f"misspelling:{misspelling}")
+            break
+
+    return violations
+
+
+# ═══════════════════════════════════════════════════════════════
+# 1b. TEXT AUTHENTICITY SCORER  (0.0 – 1.0 risk)
+# ═══════════════════════════════════════════════════════════════
+# Two-stage scoring:
+#   Stage A — Template compliance (is the format correct?)
+#   Stage B — Scam-content detection (does it contain red-flag language?)
+#
+# v6.0: Stage A trust bonus at -0.20 and "genuine lock"
+# added after Stage B.  When all core markers pass AND zero Stage B
+# fraud flags fired, text_risk is forced to 0.0 — making it impossible
+# for optional-field noise to contribute any risk at all.
+
+def _score_text_authenticity(raw_text: str, parsed: dict) -> tuple[float, list[str]]:
+    """
+    Score how closely the raw SMS matches genuine MTN language.
+
+    Returns (risk_score, list_of_flags_triggered).
+    """
+    if not raw_text:
+        return 1.0, ["empty_message"]
+
+    flags: list[str] = []
+    risk = 0.0
+    text_lower = raw_text.lower()
+    text_stripped = raw_text.strip()
+
+    # ══════════════════════════════════════════════
+    # STAGE A — Canonical template validation
+    # ══════════════════════════════════════════════
+    # v5.1: per-violation weighted scoring PLUS structural trust bonus.
+    # Each violation adds its own weight from _VIOLATION_WEIGHTS.
+    # After scoring, if core markers pass, a trust bonus subtracts 0.05
+    # to absorb minor optional-field noise.
+    violations = _validate_canonical_template(raw_text, parsed)
+    if violations:
+        for v in violations:
+            # Misspellings use a "misspelling:word" key — extract base name
+            base_key = v.split(":")[0] if v.startswith("misspelling") else v
+            weight = _VIOLATION_WEIGHTS.get(base_key, 0.05)
+            # Misspellings get a fixed 0.12 penalty (strong fraud signal)
+            if v.startswith("misspelling"):
+                weight = 0.12
+            risk += weight
+            flags.append(f"tmpl:{v}")
+
+    # ── Structural trust bonus (v6.0: -0.20) ──
+    # When all three core MTN markers are present (canonical opener,
+    # balance mention, transaction ID label), the message is almost
+    # certainly machine-generated by MTN.  The -0.20 bonus generously
+    # absorbs all soft violations (each ≤ 0.005), ensuring genuine
+    # messages with optional-field gaps score exactly 0.
+    _core_markers_present = (
+        "tmpl:no_canonical_opener" not in flags
+        and "tmpl:no_balance_mention" not in flags
+        and "tmpl:missing_txn_id_label" not in flags
+    )
+    if _core_markers_present and risk > 0:
+        risk = max(risk - 0.20, 0.0)                # trust bonus: -0.20
+        flags.append("trust_bonus_applied")
+
+    # ══════════════════════════════════════════════
+    # STAGE B — Scam-content detection
+    # ══════════════════════════════════════════════
+
+    # ── B1. Suspicious / scam phrases ──
+    # Wrong wording is a strong fraud signal — push the score firmly
+    # toward suspicious or likely_fraudulent.
+    for phrase in _SUSPICIOUS_PHRASES:
+        if phrase in text_lower:
+            risk += 0.25                             # v6.0: raised
+            flags.append(f"suspicious_phrase:{phrase}")
+            break
+
+    # ── B2. Urgency / manipulation language ──
+    # Urgency is a hallmark of social-engineering attacks — one of the
+    # heaviest penalties in the engine.
+    for word in _URGENCY_WORDS:
+        if word in text_lower:
+            risk += 0.32                             # v6.0: raised
+            flags.append(f"urgency:{word}")
+            break
+
+    # ── B3. PIN / credential request ──
+    # Asking for a PIN or OTP over SMS is always fraudulent — this is
+    # the single strongest penalty in the engine.
+    for kw in _PIN_REQUEST_WORDS:
+        if kw in text_lower:
+            risk += 0.45                             # v6.0: raised
+            flags.append(f"pin_request:{kw}")
+            break
+
+    # ── B4. Homoglyphs ──
+    # Catches words like "MOBlLE" where a lowercase letter hides among
+    # uppercase — character manipulation is a strong scam indicator.
+    for word in re.findall(r"\b[A-Za-z]{4,}\b", raw_text):
+        uppers = sum(1 for c in word if c.isupper())
+        lowers = sum(1 for c in word if c.islower())
+        if uppers >= 3 and 0 < lowers <= 2:
+            risk += 0.25                             # v6.0: raised
+            flags.append(f"homoglyph_suspect:{word}")
+            break
+
+    # ── B5. Spacing anomalies ──
+    # v6.0: double-space penalty removed entirely.  Real MTN messages
+    # frequently have minor spacing quirks (e.g. "GHS 2903.72 .")
+    # that are carrier formatting artefacts, not fraud signals.
+    # Tab characters are kept as they never appear in genuine SMS.
+    if _TAB_RE.search(raw_text):
+        risk += 0.05
+        flags.append("tab_character")
+    # double-spacing no longer penalised            [v5.2: 0.01]
+
+    # ── B6. No currency marker at all ──
+    if "ghs" not in text_lower and "ghc" not in text_lower:
+        risk += 0.06
+        flags.append("no_currency_marker")
+
+    # ── B7. Message too short to be a real notification ──
+    if len(text_stripped) < 30:
+        risk += 0.08
+        flags.append("too_short")
+
+    # ══════════════════════════════════════════════
+    # GENUINE LOCK (v6.0)
+    # ══════════════════════════════════════════════
+    # If the core MTN markers all passed (trust bonus was applied) AND
+    # none of the Stage B fraud detectors fired (no suspicious phrases,
+    # no urgency, no PIN requests, no homoglyphs), the message is
+    # structurally and linguistically consistent with genuine MTN output.
+    # Force text_risk to 0.0 so that only-soft-violation messages are
+    # mathematically guaranteed to classify as genuine.
+    _stage_b_fraud_flags = [
+        f for f in flags
+        if f.startswith(("suspicious_phrase:", "urgency:",
+                         "pin_request:", "homoglyph_suspect:",
+                         "tab_character", "no_currency_marker",
+                         "too_short"))
+    ]
+    if "trust_bonus_applied" in flags and not _stage_b_fraud_flags:
+        risk = 0.0
+        flags.append("genuine_lock")
+
+    return round(min(risk, 1.0), 2), flags
+
+
+# ═══════════════════════════════════════════════════════════════
+# 2. STRUCTURAL CONSISTENCY SCORER  (0.0 – 1.0 risk)
+# ═══════════════════════════════════════════════════════════════
+# Evaluates the PARSED fields from sms_parser.py.
+# v6.0: optional-field penalties at near-zero.  When text is clean
+# (text_risk ≤ 0.15), a structural cap in analyze_message() limits
+# structure contribution so parser quirks cannot influence the verdict.
+# Genuine data inconsistencies (balance < amount, fabricated IDs) keep
+# their higher penalties.
+
+def _score_structural_consistency(
+    raw_text: str, parsed: dict
+) -> tuple[float, list[str]]:
+    """
+    Score whether the parsed fields form a valid MTN transaction.
+
+    Returns (risk_score, list_of_flags_triggered).
+    """
+    flags: list[str] = []
+    risk = 0.0
+
+    amount = parsed.get("amount")
+    balance_after = parsed.get("balance_after")
+    available_balance = parsed.get("available_balance")
+    fee = parsed.get("fee")
+    tax = parsed.get("tax")
+    txn_id = parsed.get("mtn_transaction_id")
+    phone = parsed.get("counterparty_number")
+    dt = parsed.get("transaction_datetime")
+
+    # ── 2a. Transaction ID present & purely numeric? ──
+    # v6.0: parser-miss penalty reduced to near-zero.  The parser has
+    # known regex limitations — genuine messages may fail extraction if
+    # the ID format is slightly different from expected.
+    if not txn_id:
+        risk += 0.01                                 # v6.0: reduced
+        flags.append("missing_txn_id")
+    elif not _PURE_NUMERIC_RE.match(str(txn_id)):
+        risk += 0.01                                 # v6.0: reduced
+        flags.append("non_numeric_txn_id")
+    else:
+        # All-same-digit ID (e.g. 1111111111) is a real inconsistency
+        if len(set(str(txn_id))) == 1:
+            risk += 0.08
+            flags.append("fabricated_txn_id")
+
+    # ── 2b. Balance info present? ──
+    # v6.0: near-zero — parser may miss balance on edge-case formatting.
+    if balance_after is None:
+        risk += 0.005                                # v6.0: reduced
+        flags.append("missing_balance")
+
+    # ── 2c. Fee / e-levy parsed for transfers ──
+    # v6.0: near-zero — "TRANSACTION FEE" format may not be extracted
+    # by the parser but IS present in the raw text.
+    is_transfer = parsed.get("transaction_type") in ("transfer", "payment")
+    if is_transfer and fee is None and tax is None:
+        risk += 0.001                                # v6.0: near-zero
+        flags.append("missing_fee_or_elevy")
+
+    # ── 2d. Phone number present & valid Ghana prefix? ──
+    # v6.0: near-zero — many genuine messages contain a sender name
+    # without a phone number.
+    if not phone:
+        risk += 0.001                                # v6.0: near-zero
+        flags.append("missing_phone")
+    else:
+        prefix = phone[:3]
+        if prefix not in _GHANA_MOBILE_PREFIXES:
+            risk += 0.03
+            flags.append("non_ghana_prefix")
+
+    # ── 2e. Datetime present? ──
+    # v6.0: near-zero — many real MTN messages (especially "Payment
+    # received" format) omit timestamps entirely.
+    if not dt:
+        risk += 0.001                                # v6.0: near-zero
+        flags.append("missing_datetime")
+
+    # ── 2f. Balance ≥ amount (for incoming transactions) ──
+    # Genuine data inconsistency → kept at 0.10.
+    direction = parsed.get("direction", "incoming")
+    if direction == "incoming" and amount is not None and balance_after is not None:
+        if balance_after < amount:
+            risk += 0.10
+            flags.append("balance_less_than_amount")
+
+    # ── 2g. balance_after vs available_balance mismatch ──
+    # Genuine inconsistency → kept at 0.08.
+    if balance_after is not None and available_balance is not None:
+        if abs(balance_after - available_balance) > 1.0:
+            risk += 0.08
+            flags.append("balance_mismatch")
+
+    # ── 2h. Negative or zero amount ──
+    # Clearly broken data → kept at 0.14.
+    if amount is not None and amount <= 0:
+        risk += 0.14
+        flags.append("non_positive_amount")
+
+    return round(min(risk, 1.0), 2), flags
+
+
+# ═══════════════════════════════════════════════════════════════
+# 3. BEHAVIOR SCORER  (0.0 – 1.0 risk)
+# ═══════════════════════════════════════════════════════════════
+# RECALIBRATION v5: behaviour remains a third-tier signal (weight 0.05).
+# All penalties roughly halved vs v3.  The behavioural guard (in
+# analyze_message) ensures behaviour CANNOT push a text+structure-clean
+# message beyond the genuine threshold.
+# A new sender alone, or a high-but-plausible amount alone, must
+# NEVER push a genuine message to suspicious.
+
+def _score_behavior(
+    parsed: dict, profile: dict | None
+) -> tuple[float, list[str]]:
+    """
+    Score how much this transaction deviates from the user's history.
+
+    Returns (risk_score, list_of_flags_triggered).
+    """
+    flags: list[str] = []
+
+    # No profile → no behavioural signal at all.
+    if profile is None or profile.get("total_checks_count", 0) == 0:
+        return 0.0, ["new_user"]
+
+    risk = 0.0
+    amount = parsed.get("amount")
+
+    # ── 3a. Amount deviation from user's average / max ──
+    # CALIBRATION: penalties halved — a large legitimate transfer
+    # should not be treated as inherently suspicious.
+    if amount is not None:
+        avg = profile.get("avg_incoming_amount", 0)
+        max_amt = profile.get("max_incoming_amount", 0)
+
+        if avg > 0 and amount > avg * 5:
+            risk += 0.20                             # [v3: 0.30]
+            flags.append("amount_5x_above_average")
+        elif avg > 0 and amount > avg * 3:
+            risk += 0.10                             # [v3: 0.15]
+            flags.append("amount_3x_above_average")
+        elif avg > 0 and amount > avg * 2:
+            risk += 0.05                             # [v3: 0.08]
+            flags.append("amount_2x_above_average")
+
+        if max_amt > 0 and amount > max_amt * 1.5:
+            risk += 0.06                             # [v3: 0.10]
+            flags.append("exceeds_known_max")
+
+    # ── 3b. Transaction type novelty ──
+    # CALIBRATION: lowered (0.08 → 0.04).
+    txn_type = parsed.get("transaction_type")
+    usual_types = profile.get("usual_transaction_types", [])
+    if txn_type and usual_types and txn_type not in usual_types:
+        risk += 0.04
+        flags.append("new_txn_type")
+
+    # ── 3c. Sender novelty ──
+    # CALIBRATION: lowered (0.10 → 0.05).  Receiving money from a new
+    # person is completely normal and should carry minimal weight.
+    counterparty_number = parsed.get("counterparty_number")
+    usual_senders = profile.get("usual_senders", [])
+    if counterparty_number and usual_senders:
+        if counterparty_number not in usual_senders:
+            risk += 0.03                             # v6.0: reduced
+            flags.append("unknown_sender")
+
+    return round(min(risk, 1.0), 2), flags
+
+
+# ═══════════════════════════════════════════════════════════════
+# Classification + Explanation
+# ═══════════════════════════════════════════════════════════════
+
+def _classify(composite_risk: float) -> str:
+    """Map composite risk score to a label."""
+    if composite_risk <= _THRESHOLD_GENUINE:
+        return "genuine"
+    elif composite_risk <= _THRESHOLD_SUSPICIOUS:
+        return "suspicious"
+    else:
+        return "likely_fraudulent"
+
+
+def _build_explanation(
+    label: str,
+    text_risk: float,
+    structure_risk: float,
+    behavior_risk: float,
+    text_flags: list[str],
+    structure_flags: list[str],
+    behavior_flags: list[str],
+    parsed: dict,
+) -> str:
+    """
+    Build a calm, helpful explanation in the style of a fintech assistant.
+    Language is measured and factual — no alarmist wording.
+    """
+    observations: list[str] = []
+
+    # ── Text authenticity observations ──
+    if any("pin_request" in f for f in text_flags):
+        observations.append(
+            "it requests sensitive information such as a PIN or personal details"
+        )
+    if any(f.startswith("urgency") for f in text_flags):
+        observations.append(
+            "it contains language designed to create a sense of urgency"
+        )
+    if any(f.startswith("suspicious_phrase") for f in text_flags):
+        observations.append(
+            "it uses wording that does not appear in standard MTN notifications"
+        )
+    if "tmpl:misspelling" in " ".join(text_flags):
+        observations.append(
+            "it contains spelling errors (real MTN messages are "
+            "machine-generated and error-free)"
+        )
+    if "tmpl:wrong_currency" in text_flags:
+        observations.append(
+            "it uses the currency code 'GHC' instead of the correct 'GHS'"
+        )
+    if any("homoglyph" in f for f in text_flags):
+        observations.append(
+            "some characters appear to be visual substitutions "
+            "(for example, a lowercase 'l' in place of an uppercase 'I')"
+        )
+    if "tmpl:no_canonical_opener" in text_flags:
+        observations.append(
+            "the opening phrase does not match any known MTN MoMo format"
+        )
+    if "tmpl:name_not_all_caps" in text_flags:
+        observations.append(
+            "the sender name is not in uppercase — MTN always renders "
+            "names in ALL CAPS"
+        )
+    if "tmpl:elevy_math_wrong" in text_flags:
+        observations.append(
+            "the E-levy amount is GHS 0.00 on a transfer over GHS 100 "
+            "(it should be approximately 1 %)"
+        )
+    if "tmpl:wrong_field_order" in text_flags:
+        observations.append(
+            "the E-levy line appears before the Fee line — MTN always "
+            "prints Fee first"
+        )
+    if "tmpl:non_standard_txn_id" in text_flags:
+        observations.append(
+            "the Transaction ID format is non-standard "
+            "(MTN IDs are 10\u201311 digits)"
+        )
+    if "tmpl:unexpected_ref_field" in text_flags:
+        observations.append(
+            "the message includes a 'Ref:' field that is not part of the "
+            "standard MTN template"
+        )
+    if "tmpl:missing_fee_elevy_text" in text_flags:
+        observations.append(
+            "fee and E-levy information is missing from the message"
+        )
+    if "tmpl:no_datetime" in text_flags:
+        observations.append("no date or time stamp was found")
+    if "tmpl:no_balance_mention" in text_flags:
+        observations.append("no balance information was found")
+    if "tmpl:missing_txn_id_label" in text_flags:
+        observations.append("no Transaction ID was found in the message")
+
+    # ── Structure observations (only surface the most notable ones) ──
+    if "fabricated_txn_id" in structure_flags:
+        observations.append(
+            "the Transaction ID contains only repeated digits"
+        )
+    if "balance_less_than_amount" in structure_flags:
+        observations.append(
+            "the balance shown is lower than the received amount"
+        )
+
+    # ── Behaviour observations (kept brief — behaviour is a soft signal) ──
+    if any("above_average" in f for f in behavior_flags):
+        observations.append(
+            "this amount is noticeably higher than your usual transactions"
+        )
+    if "unknown_sender" in behavior_flags:
+        observations.append(
+            "the sender is not in your recognised contacts"
+        )
+
+    # ── Assemble the final user-facing message ──
+    if label == "genuine":
+        base = "This looks like a standard MTN MoMo notification."
+        if observations:
+            # Still genuine but with a gentle note about what we saw.
+            return (
+                f"{base} We noticed a minor detail: "
+                f"{'; '.join(observations)}. "
+                "This does not affect our assessment — the overall "
+                "message structure is consistent with genuine MTN messages."
+            )
+        amount_str = ""
+        if parsed.get("amount"):
+            amount_str = f" of GHS {parsed['amount']:,.2f}"
+        return (
+            f"{base} The format, transaction details{amount_str}, and "
+            "sender information all match what we expect from MTN."
+        )
+
+    elif label == "suspicious":
+        joined = "; ".join(observations) if observations else (
+            "some details could not be fully verified"
+        )
+        return (
+            f"We noticed something worth checking: "
+            f"{joined}. "
+            "This may still be a legitimate transaction, but we suggest "
+            "confirming through the MTN MoMo app or by dialling 100 "
+            "(MTN customer care) before taking any action."
+        )
+
+    else:  # likely_fraudulent
+        joined = "; ".join(observations) if observations else (
+            "multiple verification checks did not pass"
+        )
+        return (
+            f"This message does not appear to have been sent by MTN. "
+            f"Specifically, {joined}. "
+            "We recommend that you do not act on this message. "
+            "You can verify directly through the official MTN MoMo "
+            "app or by calling MTN customer care at 100."
+        )
+
+
+# ═══════════════════════════════════════════════════════════════
+# Public API — same signature so callers (message_check_service,
+# smoke tests) don't need changes.
+# ═══════════════════════════════════════════════════════════════
+
+def analyze_message(
+    raw_text: str,
+    parsed_fields: dict,
+    user_behavior_profile: dict | None = None,
+) -> dict:
+    """
+    Analyze an MTN MoMo SMS for authenticity.
+
+    Parameters
+    ----------
+    raw_text : str
+        The original SMS text submitted by the user.
+    parsed_fields : dict
+        Fields extracted by sms_parser.parse_sms().
+    user_behavior_profile : dict | None
+        The user's behavior profile from user_behavior_profiles table.
+        None if the user is new (no history yet).
+
+    Returns
+    -------
+    dict with keys:
+        predicted_label           — 'genuine' | 'suspicious' | 'likely_fraudulent'
+        confidence_score          — 0.0–1.0
+        explanation               — human-readable explanation
+        format_risk_score         — text authenticity risk   (0.0–1.0)
+        behavior_risk_score       — behaviour risk           (0.0–1.0)
+        balance_consistency_score — structural risk           (0.0–1.0)
+        sender_novelty_score      — derived from behaviour   (0.0–1.0)
+        model_version             — 'v5.2-rule-based'
+    """
+    # ── 1. Score each component independently ──
+    text_risk, text_flags = _score_text_authenticity(raw_text, parsed_fields)
+    structure_risk, structure_flags = _score_structural_consistency(
+        raw_text, parsed_fields
+    )
+    behavior_risk, behavior_flags = _score_behavior(
+        parsed_fields, user_behavior_profile
+    )
+
+    # ── 1b. Structural cap when text is clean (v6.0: widened) ──
+    # If the raw text closely matches MTN template (text_risk ≤ 0.10),
+    # parser quirks in the structural scorer should NOT influence the
+    # outcome.  Cap the effective structure risk so that minor field-
+    # extraction failures stay harmless.
+    effective_structure = structure_risk
+    if text_risk <= 0.15:
+        effective_structure = min(structure_risk, 0.03)
+
+    # ── 2. Compute the weighted composite ──
+    # v6.0: uses effective_structure (capped when text is clean).
+    base_composite = text_risk * _W_TEXT + effective_structure * _W_STRUCTURE
+
+    # Behavioural contribution.
+    # v6.0: behaviour is capped so it can NEVER promote a text+structure-
+    # clean message beyond the genuine threshold.  With weight 0.05 the
+    # theoretical max is ~0.05, but the guard limits it further when the
+    # base composite is already within the genuine band.
+    behavior_add = behavior_risk * _W_BEHAVIOR
+    if base_composite <= _THRESHOLD_GENUINE:
+        max_allowed = max(0.0, _THRESHOLD_GENUINE - base_composite)
+        behavior_add = min(behavior_add, max_allowed)
+
+    composite_risk = round(base_composite + behavior_add, 3)
+
+    # ── 3. Classify ──
+    label = _classify(composite_risk)
+
+    # ── 4. Confidence score ──
+    # Farther from the nearest threshold boundary → more confident.
+    if label == "genuine":
+        confidence = round(1.0 - composite_risk, 2)
+    elif label == "likely_fraudulent":
+        confidence = round(min(composite_risk + 0.15, 1.0), 2)
+    else:  # suspicious
+        midpoint = (_THRESHOLD_GENUINE + _THRESHOLD_SUSPICIOUS) / 2
+        distance = abs(composite_risk - midpoint)
+        confidence = round(0.50 + distance, 2)
+
+    confidence = max(0.10, min(confidence, 0.99))
+
+    # ── 5. Build user-facing explanation ──
+    explanation = _build_explanation(
+        label,
+        text_risk, structure_risk, behavior_risk,
+        text_flags, structure_flags, behavior_flags,
+        parsed_fields,
+    )
+
+    # ── 6. Map to the keys that message_check_service.py expects ──
+    # v6.0: unknown sender alone is not alarming, so the novelty score
+    # is reduced to avoid inflating the risk impression.
+    sender_novelty = 0.0
+    if "unknown_sender" in behavior_flags:
+        sender_novelty = 0.15                        # v6.0: reduced
+    elif "new_user" in behavior_flags:
+        sender_novelty = 0.05                        # v6.0: reduced
+
+    return {
+        "predicted_label": label,
+        "confidence_score": confidence,
+        "explanation": explanation,
+        "format_risk_score": text_risk,
+        "behavior_risk_score": behavior_risk,
+        "balance_consistency_score": structure_risk,
+        "sender_novelty_score": round(sender_novelty, 2),
+        "model_version": MODEL_VERSION,
+    }

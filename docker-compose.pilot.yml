@@ -1,0 +1,72 @@
+# ============================================================
+# MTN MoMo Fraud Detection — Pilot / Staging Compose Override
+# ============================================================
+# Use this file ON TOP of the base docker-compose.yml:
+#
+#   docker compose -f docker-compose.yml -f docker-compose.pilot.yml up -d
+#
+# What this file changes from the base:
+#   - FLASK_ENV → staging  (enables StagingConfig with strict validation)
+#   - APP_PORT  → 3001     (avoids conflict if dev stack is also running)
+#   - Tighter memory caps  (fits on a small staging VM)
+#   - Docker JSON log driver with rotation (keeps disks clean)
+#   - restart: always      (auto-recover after host reboot)
+#   - No direct DB port    (removes the 5432 host binding for security)
+#   - Gunicorn workers → 2 (staging rarely needs 4)
+#
+# Copy .env.pilot to .env before running:
+#   cp flask_backend/.env.pilot flask_backend/.env
+# ============================================================
+
+services:
+
+  # ── PostgreSQL ──────────────────────────────────────────────
+  db:
+    restart: always
+    # Remove the host-port binding so the DB is unreachable from outside
+    ports: []
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+  # ── Flask Backend ───────────────────────────────────────────
+  backend:
+    restart: always
+    environment:
+      # Override FLASK_ENV to activate StagingConfig
+      FLASK_ENV: staging
+      FLASK_DEBUG: "0"
+      # Workers: 2 is enough for pilot traffic, saves RAM
+      GUNICORN_WORKERS: "2"
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "5"
+    deploy:
+      resources:
+        limits:
+          # Reduced from 1G — sufficient for staging with no heavy traffic
+          memory: 512M
+
+  # ── React Frontend (Nginx) ─────────────────────────────────
+  frontend:
+    restart: always
+    # Pilot runs on port 3001 to avoid colliding with local dev
+    ports:
+      - "${APP_PORT:-3001}:80"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          memory: 64M

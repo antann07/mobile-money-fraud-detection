@@ -1,0 +1,107 @@
+{
+  "info": {
+    "name": "Fraud Detection API – Phase 1",
+    "description": "Auth + Wallet Linking endpoints for the mobile money fraud detection system.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:5000"
+    },
+    {
+      "key": "token",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/api/health"
+      }
+    },
+    {
+      "name": "Register User",
+      "request": {
+        "method": "POST",
+        "url": "{{base_url}}/api/auth/register",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"full_name\": \"Kofi Mensah\",\n  \"email\": \"kofi@example.com\",\n  \"phone_number\": \"0241234567\",\n  \"password\": \"securePass123\",\n  \"role\": \"customer\"\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "if (pm.response.code === 201) {",
+              "    var json = pm.response.json();",
+              "    pm.collectionVariables.set('token', json.token);",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Login User",
+      "request": {
+        "method": "POST",
+        "url": "{{base_url}}/api/auth/login",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"kofi@example.com\",\n  \"password\": \"securePass123\"\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "if (pm.response.code === 200) {",
+              "    var json = pm.response.json();",
+              "    pm.collectionVariables.set('token', json.token);",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Add Wallet",
+      "request": {
+        "method": "POST",
+        "url": "{{base_url}}/api/wallets",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{token}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"wallet_number\": \"0241234567\",\n  \"provider\": \"MTN\",\n  \"wallet_name\": \"My MTN MoMo\",\n  \"is_primary\": true\n}"
+        }
+      }
+    },
+    {
+      "name": "List Wallets",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/api/wallets",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" }
+        ]
+      }
+    }
+  ]
+}

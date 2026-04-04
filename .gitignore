@@ -1,0 +1,36 @@
+# ── Python ───────────────────────────────────────
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# ── Environment variables (NEVER commit) ────────
+.env
+.env.local
+!.env.example
+!.env.pilot
+!.env.compose.example
+
+# ── Node ─────────────────────────────────────────
+node_modules/
+dist/
+
+# ── Database ─────────────────────────────────────
+*.db
+
+# ── Logs ─────────────────────────────────────────
+logs/
+*.log
+
+# ── Uploads / runtime data ──────────────────────
+uploads/
+flask_backend/uploads/
+
+# ── OS files ─────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ── IDE ──────────────────────────────────────────
+.vscode/
+.idea/

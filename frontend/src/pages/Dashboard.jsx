@@ -1,374 +1,376 @@
-import React, { useEffect, useState } from 'react';
-import api from '../services/api';
+import React, { useEffect, useState, useRef } from "react";
+import { Link } from "react-router-dom";
+import { publicFetch, authFetch } from "../services/api";
+import PageLayout from "../components/PageLayout";
+import { VERDICT_LABEL, pillClass } from "../utils/verdictUtils";
+import { relativeTime } from "../utils/timeUtils";
 
-const TYPE_LABELS = {
-  deposit: 'Deposit',
-  cashin: 'Cash In',
-  transfer_in: 'Transfer In',
-  transfer_out: 'Transfer Out',
-  cashout: 'Cash Out',
-  withdrawal: 'Withdrawal',
-  transfer: 'Transfer',
-};
-
-const formatAmount = (amount) =>
-  Number(amount || 0).toLocaleString('en-GH', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-
-const formatDateTime = (value) => {
-  if (!value) {
-    return 'Time not available';
-  }
-
-  return new Date(value).toLocaleString('en-GH', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-};
-
-const getProtectionEvent = (transaction) => {
-  const isBlocked = transaction?.blocked || transaction?.isBlocked || transaction?.status === 'blocked';
-  const isSuspicious = transaction?.isSuspicious || transaction?.verificationStatus === 'suspicious';
-  const isIncoming = transaction?.transactionDirection === 'incoming';
-  const isOutgoing = transaction?.transactionDirection === 'outgoing';
-  const typeLabel = TYPE_LABELS[transaction?.transactionType] || transaction?.transactionType || 'Transaction';
-
-  if (isBlocked && isOutgoing) {
-    return {
-      tone: 'danger',
-      label: 'Blocked transfer',
-      message: transaction?.blockReason || 'A risky outgoing payment was stopped before money left the wallet.',
-      action: transaction?.recommendedAction || 'Confirm the receiver before trying again.',
-      typeLabel,
-    };
-  }
-
-  if (isSuspicious && isIncoming) {
-    return {
-      tone: 'warning',
-      label: 'Suspicious deposit',
-      message: transaction?.fraudExplanation || 'This incoming money does not match the normal pattern on the wallet.',
-      action: transaction?.recommendedAction || 'Wait for verification before spending the money.',
-      typeLabel,
-    };
-  }
-
-  return {
-    tone: 'info',
-    label: 'Under review',
-    message: transaction?.fraudExplanation || 'The transaction is still being checked by the protection system.',
-    action: transaction?.recommendedAction || 'Check the transaction details and wait for confirmation.',
-    typeLabel,
-  };
-};
+// ============================================================
+// Dashboard.jsx — Wallet Protection Dashboard
+// ============================================================
+// Fetches on mount:
+//   GET /api/health                    — backend connection check
+//   GET /api/wallet                    — count wallets
+//   GET /api/message-checks/history    — message check stats + recent list
+//
+// GET requests are automatically deduplicated and short-cached by
+// api.js (20-second TTL), so navigating Dashboard → MessageHistory
+// reuses the same in-memory data rather than firing a second request.
+// ============================================================
 
 function Dashboard() {
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [protectionIndicators, setProtectionIndicators] = useState({
-    walletTransactions: 0,
-    fraudWarnings: 0,
-    blockedTransactions: 0,
-    suspiciousDeposits: 0,
-    underReview: 0,
-    blockedOutgoing: 0,
-    fundsOnHold: 0,
+  const [healthOk, setHealthOk] = useState(null);
+  const [stats, setStats] = useState({
+    wallets: 0,
+    totalChecks: 0,
+    verified: 0,
+    flagged: 0,
+    recentChecks: [],
   });
-  const [recentProtectionEvents, setRecentProtectionEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
+  // Guard against stale state updates from unmounted instances.
+  // In React StrictMode (development), useEffect fires twice per mount.
+  // The mountedRef lets async callbacks know whether to proceed with
+  // setState after the first invocation has been cleaned up.
+  const mountedRef = useRef(true);
   useEffect(() => {
-    const fetchSummary = async () => {
-      try {
-        const [summaryResponse, transactionsResponse] = await Promise.all([
-          api.get('/dashboard/summary'),
-          api.get('/transactions'),
-        ]);
-
-        const summaryData = summaryResponse.data || {};
-        const transactions = Array.isArray(transactionsResponse.data)
-          ? transactionsResponse.data
-          : [];
-
-        const blockedTransactions = transactions.filter(
-          (tx) => tx?.blocked || tx?.isBlocked || tx?.status === 'blocked'
-        );
-
-        const suspiciousDeposits = transactions.filter((tx) => {
-          const isDeposit = ['deposit', 'cashin', 'transfer_in'].includes(tx?.transactionType);
-          const isSuspicious = tx?.isSuspicious || tx?.verificationStatus === 'suspicious';
-          return isDeposit && isSuspicious;
-        });
-
-        const underReview = transactions.filter(
-          (tx) => tx?.verificationStatus === 'unverified' || tx?.status === 'pending'
-        );
-
-        const blockedOutgoing = blockedTransactions.filter(
-          (tx) => tx?.transactionDirection === 'outgoing'
-        );
-
-        const fundsOnHold = transactions.filter((tx) => tx?.availableForUse === false).length;
-
-        const recentEvents = transactions
-          .filter(
-            (tx) =>
-              tx?.blocked ||
-              tx?.isBlocked ||
-              tx?.status === 'blocked' ||
-              tx?.isSuspicious ||
-              tx?.verificationStatus === 'suspicious' ||
-              tx?.status === 'pending'
-          )
-          .sort((left, right) => new Date(right?.timestamp || 0) - new Date(left?.timestamp || 0))
-          .slice(0, 4);
-
-        setProtectionIndicators({
-          walletTransactions: summaryData?.totalTransactions || transactions.length,
-          fraudWarnings: summaryData?.totalFraudAlerts || 0,
-          blockedTransactions: blockedTransactions.length,
-          suspiciousDeposits: suspiciousDeposits.length,
-          underReview: underReview.length,
-          blockedOutgoing: blockedOutgoing.length,
-          fundsOnHold,
-        });
-        setRecentProtectionEvents(recentEvents);
-      } catch (err) {
-        setError('Failed to load dashboard data');
-        console.error('Dashboard error:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchSummary();
+    mountedRef.current = true;
+    return () => { mountedRef.current = false; };
   }, []);
 
-  const needsAttention = protectionIndicators.blockedOutgoing > 0 || protectionIndicators.suspiciousDeposits > 0;
+  useEffect(() => {
+    checkHealth();
+    loadStats();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  if (loading) {
-    return (
-      <div>
-        <div className="page-header">
-          <h1>Wallet Protection Dashboard</h1>
-          <p>See suspicious deposits, blocked payments, and how the wallet is being protected.</p>
-        </div>
-        <div className="loading-state">
-          <div className="spinner"></div>
-          <p>Loading dashboard data...</p>
-        </div>
-      </div>
-    );
+  async function checkHealth() {
+    try {
+      await publicFetch("/api/health");
+      if (mountedRef.current) setHealthOk(true);
+    } catch {
+      if (mountedRef.current) setHealthOk(false);
+    }
   }
 
-  if (error) {
-    return (
-      <div>
-        <div className="page-header">
-          <h1>Wallet Protection Dashboard</h1>
-          <p>See suspicious deposits, blocked payments, and how the wallet is being protected.</p>
-        </div>
-        <div className="message-box error">
-          <span className="message-icon">❌</span>
-          {error}
-        </div>
-      </div>
-    );
+  async function loadStats() {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      if (mountedRef.current) setLoading(false);
+      return;
+    }
+
+    try {
+      const [walletRes, historyRes] = await Promise.all([
+        authFetch("/api/wallet"),
+        authFetch("/api/message-checks/history"),
+      ]);
+
+      if (!mountedRef.current) return; // unmounted before both resolved
+
+      if (!walletRes.response.ok || !historyRes.response.ok) {
+        if (historyRes.response.status === 429 || walletRes.response.status === 429) {
+          // Silently degrade — show zeros rather than an alarming error banner
+          // The user will see the proper 429 experience on the History page
+        } else {
+          setError("Some data could not be loaded. Try logging in again.");
+        }
+      }
+
+      const walletCount = walletRes.data.wallets?.length || 0;
+      const checks = historyRes.data.data || [];
+      const totalChecks = checks.length;
+
+      const verified = checks.filter(
+        (c) => c.prediction_summary?.predicted_label === "genuine"
+      ).length;
+
+      const flagged = checks.filter(
+        (c) =>
+          c.prediction_summary?.predicted_label === "suspicious" ||
+          c.prediction_summary?.predicted_label === "likely_fraudulent"
+      ).length;
+
+      // Most-recent 5 checks, newest first
+      const recentChecks = [...checks]
+        .sort((a, b) => {
+          const da = new Date(a.message_check?.created_at || 0);
+          const db = new Date(b.message_check?.created_at || 0);
+          return db - da;
+        })
+        .slice(0, 5);
+
+      setStats({ wallets: walletCount, totalChecks, verified, flagged, recentChecks });
+    } catch (err) {
+      if (!mountedRef.current) return;
+      console.error("[Dashboard] Failed to load stats:", err);
+      setError("Could not reach the server. Is the backend running?");
+    } finally {
+      if (mountedRef.current) setLoading(false);
+    }
   }
+
+  // Derived display values (safe when not yet loaded)
+  const clearPct = stats.totalChecks > 0
+    ? Math.round((stats.verified / stats.totalChecks) * 100)
+    : 0;
+  const clearColor = clearPct >= 80
+    ? "var(--color-success)"
+    : clearPct >= 60
+    ? "var(--color-warning)"
+    : "var(--color-danger)";
 
   return (
-    <div>
-      <div className="page-header">
-        <h1>Wallet Protection Dashboard</h1>
-        <p>See suspicious deposits, blocked payments, and how the wallet is being protected.</p>
-      </div>
+    <PageLayout
+      title="Wallet Protection Dashboard"
+      subtitle="Live overview of your wallets and message verification status."
+    >
 
-      <div className={`protection-status-panel ${needsAttention ? 'warning' : 'safe'}`}>
-        <div className="protection-status-icon">{needsAttention ? '⚠️' : '🛡️'}</div>
-        <div className="protection-status-content">
-          <h3>
-            {needsAttention
-              ? 'Protection is active. Some transactions need attention.'
-              : 'Protection is active. No risky wallet movement has been found.'}
-          </h3>
-          <ul className="protection-status-list">
-            <li>
-              <span className="status-pill trusted">Safe wallet</span>
-              {protectionIndicators.fundsOnHold > 0
-                ? `${protectionIndicators.fundsOnHold} transaction${protectionIndicators.fundsOnHold !== 1 ? 's are' : ' is'} on hold until checks are completed`
-                : 'No money is currently on hold'}
-            </li>
-            <li>
-              <span className="status-pill review">Review</span>
-              {protectionIndicators.suspiciousDeposits > 0
-                ? `${protectionIndicators.suspiciousDeposits} suspicious deposit${protectionIndicators.suspiciousDeposits !== 1 ? 's need' : ' needs'} verification`
-                : 'No suspicious deposit detected'}
-            </li>
-            <li>
-              <span className="status-pill blocked">Blocked</span>
-              {protectionIndicators.blockedOutgoing > 0
-                ? `${protectionIndicators.blockedOutgoing} outgoing transaction${protectionIndicators.blockedOutgoing !== 1 ? 's were' : ' was'} stopped to protect the wallet`
-                : 'No outgoing transaction has been blocked'}
-            </li>
-          </ul>
+      {/* Backend connection — only surface an error if it actually fails */}
+      {healthOk === false && (
+        <div className="message-box error" role="alert" aria-live="assertive">
+          <span className="message-icon">&#10060;</span>
+          The protection service is currently unavailable. Please try again shortly.
         </div>
-      </div>
+      )}
 
-      <div className="summary-grid">
-        <div className="summary-card">
-          <div className="card-header">
-            <div>
-              <h3>Wallet Transactions</h3>
-              <div className="summary-value">{protectionIndicators.walletTransactions}</div>
-              <p className="summary-note">All wallet activity currently recorded in the system</p>
-            </div>
-            <div className="card-icon-bg blue">💳</div>
-          </div>
+      {/* Login prompt if no token */}
+      {!localStorage.getItem("token") && (
+        <div className="message-box info" role="status">
+          <span className="message-icon">&#128273;</span>
+          Log in to see your live dashboard stats.
         </div>
+      )}
 
-        <div className="summary-card">
-          <div className="card-header">
-            <div>
-              <h3>Fraud Warnings</h3>
-              <div className="summary-value">{protectionIndicators.fraudWarnings}</div>
-              <p className="summary-note">Warnings raised when wallet activity looks unusual</p>
-            </div>
-            <div className="card-icon-bg amber">🔔</div>
-          </div>
+      {/* Error state */}
+      {error && (
+        <div className="message-box error" role="alert" aria-live="assertive">
+          <span className="message-icon">&#10060;</span>
+          {error}
         </div>
+      )}
 
-        <div className="summary-card">
-          <div className="card-header">
-            <div>
-              <h3>Blocked Transactions</h3>
-              <div className="summary-value">{protectionIndicators.blockedTransactions}</div>
-              <p className="summary-note">Risky outgoing transactions stopped before money left the wallet</p>
-            </div>
-            <div className="card-icon-bg red">🚨</div>
-          </div>
+      {/* Loading */}
+      {loading ? (
+        <div className="loading-state" role="status" aria-live="polite" aria-label="Loading dashboard statistics">
+          <div className="spinner" aria-hidden="true"></div>
+          <p>Loading your dashboard&hellip;</p>
         </div>
-
-        <div className="summary-card">
-          <div className="card-header">
-            <div>
-              <h3>Suspicious Deposits</h3>
-              <div className="summary-value">{protectionIndicators.suspiciousDeposits}</div>
-              <p className="summary-note">Incoming money marked for extra checks before it can be trusted</p>
-            </div>
-            <div className="card-icon-bg green">✅</div>
-          </div>
-        </div>
-      </div>
-
-      <div className="customer-insight-grid dashboard-insight-grid">
-        <div className="customer-insight-card danger">
-          <div className="customer-insight-header">
-            <span className="customer-insight-icon">⛔</span>
-            <div>
-              <h3>Blocked transfers</h3>
-              <p>The system stops risky outgoing payments before they leave the wallet.</p>
-            </div>
-          </div>
-          <div className="customer-insight-value">{protectionIndicators.blockedOutgoing}</div>
-          <p className="customer-insight-footnote">Recommended action: confirm the receiver and transfer reason before trying again.</p>
-        </div>
-
-        <div className="customer-insight-card warning">
-          <div className="customer-insight-header">
-            <span className="customer-insight-icon">🔎</span>
-            <div>
-              <h3>Suspicious deposits</h3>
-              <p>Incoming funds that look unusual are marked and watched closely.</p>
-            </div>
-          </div>
-          <div className="customer-insight-value">{protectionIndicators.suspiciousDeposits}</div>
-          <p className="customer-insight-footnote">Recommended action: wait for verification before cashing out or sending the money.</p>
-        </div>
-
-        <div className="customer-insight-card info">
-          <div className="customer-insight-header">
-            <span className="customer-insight-icon">🛡️</span>
-            <div>
-              <h3>Wallet protection</h3>
-              <p>Money can be held or reviewed when the pattern does not look normal.</p>
-            </div>
-          </div>
-          <div className="customer-insight-value">{protectionIndicators.fundsOnHold}</div>
-          <p className="customer-insight-footnote">Transactions on hold cannot be used until the checks are completed.</p>
-        </div>
-      </div>
-
-      <div className="dashboard-section-grid">
-        <div className="table-container dashboard-section-card">
-          <div className="table-header">
-            <h2>What Needs Attention</h2>
-            <span className="table-count">{protectionIndicators.underReview} under review</span>
-          </div>
-          <div className="dashboard-action-list">
-            <div className="dashboard-action-item">
-              <span className="dashboard-action-badge danger">Blocked</span>
+      ) : (
+        <>
+          {/* ── Flagged-messages attention callout ─────────────────── */}
+          {stats.flagged > 0 && (
+            <div className="message-box warning dash-flagged-callout" role="alert">
+              <span className="message-icon">&#9888;&#65039;</span>
               <div>
-                <h3>Outgoing payments are stopped when the risk is high</h3>
-                <p>This prevents money from moving out before the owner confirms the transaction.</p>
+                <strong>
+                  {stats.flagged} message{stats.flagged > 1 ? "s" : ""} flagged for review.
+                </strong>
+                {" "}Do not act on flagged messages until you have confirmed them.{" "}
+                <Link to="/message-history" className="dash-inline-link">
+                  Review now &rarr;
+                </Link>
               </div>
-            </div>
-            <div className="dashboard-action-item">
-              <span className="dashboard-action-badge warning">Deposit</span>
-              <div>
-                <h3>Suspicious deposits stay visible but are treated carefully</h3>
-                <p>The system can keep such money on hold until the sender and activity look safe.</p>
-              </div>
-            </div>
-            <div className="dashboard-action-item">
-              <span className="dashboard-action-badge info">Action</span>
-              <div>
-                <h3>Recommended next step for users</h3>
-                <p>Check the sender, check the receiver, and wait for the final verification update before using the money.</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="table-container dashboard-section-card">
-          <div className="table-header">
-            <h2>Recent Protection Activity</h2>
-            <span className="table-count">{recentProtectionEvents.length} item{recentProtectionEvents.length !== 1 ? 's' : ''}</span>
-          </div>
-          {recentProtectionEvents.length > 0 ? (
-            <div className="protection-activity-list">
-              {recentProtectionEvents.map((transaction) => {
-                const event = getProtectionEvent(transaction);
-
-                return (
-                  <div className={`protection-activity-item ${event.tone}`} key={transaction?._id}>
-                    <div className="protection-activity-topline">
-                      <span className={`dashboard-action-badge ${event.tone}`}>{event.label}</span>
-                      <span className="protection-activity-time">{formatDateTime(transaction?.timestamp)}</span>
-                    </div>
-                    <h3>{event.typeLabel} of GHS {formatAmount(transaction?.amount)}</h3>
-                    <p>{event.message}</p>
-                    <div className="protection-activity-meta">
-                      <span>{transaction?.fullName || 'Customer not available'}</span>
-                      <span>{transaction?.location || 'Location not available'}</span>
-                    </div>
-                    <div className="protection-activity-action">Recommended action: {event.action}</div>
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="empty-state dashboard-empty-state">
-              <div className="empty-state-icon">✅</div>
-              <p>No recent suspicious or blocked transaction has been recorded.</p>
             </div>
           )}
-        </div>
-      </div>
-    </div>
+
+          {/* ── KPI cards ──────────────────────────────────────────── */}
+          <section aria-label="Account summary statistics">
+            <div className="summary-grid">
+
+              <Link to="/wallets" className="summary-card summary-card-link" aria-label="Manage Wallets">
+                <div className="card-header">
+                  <div>
+                    <h3>Linked Wallets</h3>
+                    <div className="summary-value">{stats.wallets}</div>
+                    <p className="summary-note">Mobile money accounts connected</p>
+                  </div>
+                  <div className="card-icon-bg blue">&#128179;</div>
+                </div>
+              </Link>
+
+              <Link to="/message-history" className="summary-card summary-card-link" aria-label="View message history">
+                <div className="card-header">
+                  <div>
+                    <h3>Messages Checked</h3>
+                    <div className="summary-value">{stats.totalChecks}</div>
+                    <p className="summary-note">SMS and screenshot verifications</p>
+                  </div>
+                  <div className="card-icon-bg amber">&#128232;</div>
+                </div>
+              </Link>
+
+              <Link to="/message-history" className="summary-card summary-card-link" aria-label="View verified messages">
+                <div className="card-header">
+                  <div>
+                    <h3>Confirmed Genuine</h3>
+                    <div className="summary-value">{stats.verified}</div>
+                    <p className="summary-note">Messages verified as authentic</p>
+                  </div>
+                  <div className="card-icon-bg green">&#128737;&#65039;</div>
+                </div>
+              </Link>
+
+              <Link to="/message-history" className="summary-card summary-card-link" aria-label="Review flagged messages">
+                <div className="card-header">
+                  <div>
+                    <h3>Flagged</h3>
+                    <div className={`summary-value${stats.flagged > 0 ? " danger-text" : ""}`}>
+                      {stats.flagged}
+                    </div>
+                    <p className="summary-note">Suspicious or potential fraud</p>
+                  </div>
+                  <div className="card-icon-bg red">&#9888;&#65039;</div>
+                </div>
+              </Link>
+
+            </div>
+          </section>
+
+          {/* ── Widgets row (only when checks exist) ───────────────── */}
+          {stats.totalChecks > 0 && (
+            <div className="dash-widgets-row">
+
+              {/* Security overview */}
+              <div className="form-card dash-widget-card">
+                <h3 className="dash-widget-title">Security Overview</h3>
+
+                <div className="dash-meter-row">
+                  <div className="dash-meter-label">
+                    <span>Clear rate</span>
+                    <span className="dash-meter-pct" style={{ color: clearColor }}>
+                      {clearPct}%
+                    </span>
+                  </div>
+                  <div className="dash-meter-track" role="progressbar" aria-valuenow={clearPct} aria-valuemin={0} aria-valuemax={100}>
+                    <div
+                      className="dash-meter-fill"
+                      style={{ width: `${clearPct}%`, background: clearColor }}
+                    />
+                  </div>
+                  <p className="dash-meter-sub">
+                    of checked messages confirmed genuine by the fraud engine
+                  </p>
+                </div>
+
+                <div className="dash-ov-stats">
+                  <div className="dash-ov-item">
+                    <span className="dash-ov-value">{stats.totalChecks}</span>
+                    <span className="dash-ov-label">Total checked</span>
+                  </div>
+                  <div className="dash-ov-item">
+                    <span className="dash-ov-value" style={{ color: "var(--color-success)" }}>
+                      {stats.verified}
+                    </span>
+                    <span className="dash-ov-label">Verified clean</span>
+                  </div>
+                  {stats.flagged > 0 && (
+                    <div className="dash-ov-item">
+                      <span className="dash-ov-value" style={{ color: "var(--color-danger)" }}>
+                        {stats.flagged}
+                      </span>
+                      <span className="dash-ov-label">Flagged</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Quick actions */}
+              <div className="form-card dash-widget-card dash-quick-actions">
+                <h3 className="dash-widget-title">Quick Actions</h3>
+                <div className="dash-action-list">
+                  <Link to="/check-message" className="btn btn-primary dash-action-btn">
+                    Verify a Message
+                  </Link>
+                  <Link to="/wallets" className="btn btn-outline dash-action-btn">
+                    My Wallets
+                  </Link>
+                  <Link to="/message-history" className="btn btn-outline dash-action-btn">
+                    View Full History
+                  </Link>
+                </div>
+              </div>
+
+            </div>
+          )}
+
+          {/* ── Recent checks ──────────────────────────────────────── */}
+          {stats.totalChecks > 0 && (
+            <section className="dash-recent-section" aria-label="Recent message checks">
+              <div className="dash-section-head">
+                <h3 className="dash-section-title">Recent Checks</h3>
+                <Link to="/message-history" className="dash-view-all">
+                  View all &rarr;
+                </Link>
+              </div>
+
+              <div className="form-card dash-recent-card">
+                {stats.recentChecks.map((item) => {
+                  const mc = item.message_check;
+                  const ps = item.prediction_summary;
+                  const label = ps?.predicted_label;
+                  const sender =
+                    mc.sender_name ||
+                    mc.counterparty_name ||
+                    mc.sender_number ||
+                    mc.counterparty_number;
+                  const verdictDisplay = label
+                    ? (VERDICT_LABEL[label] || label.replace(/_/g, " "))
+                    : "Not Analysed";
+                  const pillCls = label ? pillClass(label) : "info";
+
+                  return (
+                    <Link
+                      to={`/message-history/${mc.id}`}
+                      key={mc.id}
+                      className="dash-recent-row"
+                    >
+                      <span className={`status-pill ${pillCls} dash-recent-pill`}>
+                        {verdictDisplay}
+                      </span>
+                      <span className="dash-recent-sender">
+                        {sender || <span className="dash-recent-unknown">Unknown sender</span>}
+                      </span>
+                      {mc.amount != null && (
+                        <span className="dash-recent-amount">
+                          {mc.currency || "GHS"}&nbsp;{Number(mc.amount).toLocaleString()}
+                        </span>
+                      )}
+                      <span className="dash-recent-time">
+                        {relativeTime(mc.created_at).label}
+                      </span>
+                    </Link>
+                  );
+                })}
+              </div>
+            </section>
+          )}
+
+          {/* ── Empty state nudge (no checks yet) ─────────────────── */}
+          {stats.totalChecks === 0 && localStorage.getItem("token") && (
+            <div className="dash-empty-nudge">
+              <div className="dash-nudge-icon">&#128737;&#65039;</div>
+              <h3>Start protecting your wallet</h3>
+              <p>
+                Verify your first MoMo message to build your protection history
+                and let the fraud engine analyse your payment notifications.
+              </p>
+              <div className="dash-nudge-actions">
+                <Link to="/check-message" className="btn btn-primary">
+                  Verify a Message
+                </Link>
+                {stats.wallets === 0 && (
+                  <Link to="/wallets" className="btn btn-outline">
+                    Link a Wallet First
+                  </Link>
+                )}
+              </div>
+            </div>
+          )}
+        </>
+      )}
+    </PageLayout>
   );
 }
 

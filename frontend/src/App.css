@@ -1,50 +1,158 @@
 /* ===================================================
-   App.css — Polished Fraud Detection Dashboard
-   Presentation-Ready UI
+   App.css — Mobile Money Fraud Detection Dashboard
+   Presentation-Ready · Defense-Grade UI
    =================================================== */
 
-/* ---------- CSS Variables ---------- */
+/* ─────────── Design Tokens ─────────── */
 :root {
+  /* Brand — slightly desaturated, still clearly blue */
   --color-primary: #2563eb;
   --color-primary-dark: #1d4ed8;
   --color-primary-light: #dbeafe;
+  --color-primary-50: #eff6ff;
+
+  /* Neutrals */
   --color-navy: #0f172a;
   --color-navy-mid: #1e293b;
   --color-slate-700: #334155;
+  --color-slate-600: #475569;
   --color-slate-500: #64748b;
   --color-slate-400: #94a3b8;
+  --color-slate-300: #cbd5e1;
   --color-slate-200: #e2e8f0;
   --color-slate-100: #f1f5f9;
   --color-slate-50: #f8fafc;
-  --color-bg: #f0f2f5;
+  --color-bg: #f0f4f8;
   --color-white: #ffffff;
-  --color-danger: #dc2626;
-  --color-danger-bg: #fef2f2;
-  --color-danger-border: #fecaca;
-  --color-success: #16a34a;
-  --color-success-bg: #f0fdf4;
-  --color-success-border: #bbf7d0;
-  --color-warning: #d97706;
+
+  /* Semantic — softened for a professional security tool                   */
+  /* Danger: slightly muted crimson instead of pure #dc2626               */
+  --color-danger: #c53030;
+  --color-danger-bg: #fef6f6;
+  --color-danger-border: #f5c6c6;
+  /* Success: forest green — calm, not neon                                */
+  --color-success: #1a7f5a;
+  --color-success-bg: #f0fdf7;
+  --color-success-border: #a7e3ca;
+  /* Warning: warm amber — readable, not blinding                          */
+  --color-warning: #b45309;
   --color-warning-bg: #fffbeb;
-  --color-warning-border: #fde68a;
+  --color-warning-border: #f3d08a;
+  /* Info: same as primary                                                 */
   --color-info: #2563eb;
   --color-info-bg: #eff6ff;
   --color-info-border: #bfdbfe;
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+
+  /* Shadows */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
   --shadow-lg: 0 10px 25px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
-  --shadow-xl: 0 20px 50px -12px rgba(0, 0, 0, 0.15);
+  --shadow-xl: 0 20px 50px -12px rgba(0, 0, 0, 0.18);
+
+  /* Radii */
   --radius-sm: 6px;
   --radius-md: 10px;
   --radius-lg: 14px;
   --radius-xl: 18px;
-  --sidebar-width: 260px;
-  --navbar-height: 60px;
-  --transition-fast: 0.15s ease;
-  --transition-normal: 0.25s ease;
+  --radius-full: 9999px;
+
+  /* Layout */
+  --sidebar-width: 272px;           /* +12px gives premium breathing room */
+  --sidebar-collapsed-width: 64px;
+  --navbar-height: 62px;
+
+  /* Motion */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-fast: 0.15s var(--ease-out);
+  --transition-normal: 0.25s var(--ease-out);
 }
 
-/* ---------- Reset & Base ---------- */
+/* ─────────── Dark Theme Overrides ─────────── */
+[data-theme="dark"] {
+  /* Primary — steel blue, not electric */
+  --color-primary: #4a90d9;
+  --color-primary-dark: #6aaee8;
+  --color-primary-light: #1a3352;
+  --color-primary-50: #111e30;
+
+  /* Text / foreground — high → low contrast
+     Background reference: card surface #172030 (relative luminance ~0.011)
+     These values are calibrated so each step passes its intended WCAG level.
+  */
+  --color-navy: #e8edf3;         /* primary headings    ~14:1  on card  */
+  --color-navy-mid: #ccd6e0;     /* body text           ~10:1  on card  */
+  --color-slate-700: #adbcca;    /* secondary text      ~7.2:1 on card  */
+  --color-slate-600: #94a8b8;    /* muted labels        ~5.6:1  ✅ AA   */
+  --color-slate-500: #8298ac;    /* placeholder / hint  ~4.9:1  ✅ AA   */
+  --color-slate-400: #7690a3;    /* faintest / disabled ~4.3:1  ✅ AA-L */
+
+  /* Surfaces — warmer, layered dark palette                               */
+  /* Slight warm-grey bias avoids the cold blue-black tunnel effect        */
+  --color-slate-300: #2e3d4d;    /* visible borders */
+  --color-slate-200: #253040;    /* card border / dividers */
+  --color-slate-100: #1c2a38;    /* elevated surface (sidebar, pill bg) */
+  --color-slate-50: #111a25;     /* deep inset bg */
+  --color-bg: #0d1520;           /* page background — slightly warmer than pure #0f172a */
+  --color-white: #172030;        /* card / panel surface */
+
+  /* Semantic — desaturated, no neon, intent still readable                */
+  /* Danger: warm rose, not hot pink                                       */
+  --color-danger: #c87070;
+  --color-danger-bg: #1d1215;
+  --color-danger-border: #4d2424;
+  /* Success: muted teal-green                                             */
+  --color-success: #3dab85;
+  --color-success-bg: #0e201a;
+  --color-success-border: #1a4434;
+  /* Warning: warm amber, toned down                                       */
+  --color-warning: #c07c20;
+  --color-warning-bg: #1a1508;
+  --color-warning-border: #5a3810;
+  /* Info */
+  --color-info: #4a90d9;
+  --color-info-bg: #0c1825;
+  --color-info-border: #1a3352;
+
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -2px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 10px 25px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -4px rgba(0, 0, 0, 0.3);
+  --shadow-xl: 0 20px 50px -12px rgba(0, 0, 0, 0.6);
+}
+
+/* ─────────── Theme Toggle ─────────── */
+.theme-toggle {
+  display: flex;
+  gap: 2px;
+  background: var(--color-slate-100);
+  border-radius: var(--radius-full);
+  padding: 2px;
+  margin-bottom: 0.5rem;
+  justify-content: center;
+}
+
+.theme-toggle-btn {
+  border: none;
+  background: transparent;
+  padding: 0.3rem 0.6rem;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: background var(--transition-fast), transform var(--transition-fast);
+  line-height: 1;
+}
+
+.theme-toggle-btn:hover {
+  background: var(--color-slate-200);
+}
+
+.theme-toggle-btn.active {
+  background: var(--color-white);
+  box-shadow: var(--shadow-xs);
+}
+
+/* ─────────── Reset & Base ─────────── */
 *,
 *::before,
 *::after {
@@ -55,10 +163,11 @@
 
 html {
   scroll-behavior: smooth;
+  font-size: 16px;
 }
 
 body {
-  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Inter', Roboto, Helvetica, Arial, sans-serif;
+  font-family: 'Inter', 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif;
   background-color: var(--color-bg);
   color: var(--color-navy-mid);
   line-height: 1.6;
@@ -66,66 +175,169 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* ---------- App Layout ---------- */
+/* ─────────── Accessibility Utilities ─────────── */
+
+/* Skip-to-content: WCAG 2.4.1 — Bypass Blocks
+   Visually hidden until focused, then slides down into view. */
+.skip-link {
+  position: absolute;
+  top: -100%;
+  left: 0.5rem;
+  z-index: 10000;
+  padding: 0.6rem 1.25rem;
+  background: var(--color-primary);
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+  text-decoration: none;
+  transition: top var(--transition-fast);
+}
+.skip-link:focus {
+  top: 0;
+  outline: 3px solid #fff;
+  outline-offset: 2px;
+}
+
+/* Screen-reader-only utility: WCAG 1.3.1 */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Global keyboard focus ring: WCAG 2.4.7 / 2.4.11
+   :focus-visible fires only for keyboard / AT navigation — not mouse clicks.
+   Individual components may tighten or enhance this baseline ring. */
+:focus-visible {
+  outline: 3px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Dark-background interactive elements need a white outline ring.
+   Blue-on-dark-blue (navbar, btn-primary) is invisible. WCAG 1.4.11. */
+.navbar button:focus-visible,
+.navbar a:focus-visible,
+.btn-primary:focus-visible,
+.btn-logout:focus-visible,
+.sidebar-toggle-btn:focus-visible,
+.tab-btn.active:focus-visible {
+  outline-color: #ffffff;
+  outline-offset: 3px;
+}
+
+/* ─────────── App Layout ─────────── */
 .app-layout {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
 }
 
-/* ============================
+.main-content {
+  display: flex;
+  flex: 1;
+}
+
+/* ============================================================
    NAVBAR
-   ============================ */
+   ============================================================ */
 .navbar {
-  background: linear-gradient(135deg, #0f172a 0%, #162544 50%, #1e3a5f 100%);
+  background: linear-gradient(135deg, #0f172a 0%, #1a2744 50%, #1e3a5f 100%);
   color: var(--color-white);
-  padding: 0 1.75rem;
+  padding: 0 2rem;
   height: var(--navbar-height);
   display: flex;
   align-items: center;
   position: sticky;
   top: 0;
-  z-index: 30;
-  box-shadow: 0 2px 16px rgba(15, 23, 42, 0.3);
+  z-index: 100;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.06), 0 4px 20px rgba(0, 0, 0, 0.25);
 }
 
 .navbar-content {
   display: flex;
   align-items: center;
-  gap: 0.9rem;
   width: 100%;
   max-width: 1600px;
 }
 
+.navbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-shrink: 0;
+  /* Anchor brand zone to exact sidebar width — creates the T-intersection that
+     production fintech dashboards (Stripe, Braintree, Linear) all use:
+     navbar-padding(2rem) + brand-min-width = var(--sidebar-width)            */
+  min-width: calc(var(--sidebar-width) - 2rem);
+  padding-right: 1.5rem;
+  margin-right: 0.25rem;
+  border-right: 1px solid rgba(255, 255, 255, 0.07);
+}
+
 .navbar-logo {
-  width: 38px;
-  height: 38px;
-  background: rgba(255, 255, 255, 0.1);
+  width: 36px;
+  height: 36px;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.25), rgba(139, 92, 246, 0.25));
   border-radius: var(--radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.3rem;
+  font-size: 1.2rem;
   flex-shrink: 0;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .navbar-title {
-  font-size: 1.1rem;
+  font-size: 1.05rem;
   font-weight: 700;
-  letter-spacing: 0.15px;
+  letter-spacing: 0.1px;
   color: var(--color-white);
-  line-height: 1.3;
+  line-height: 1.2;
 }
 
 .navbar-subtitle {
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   color: var(--color-slate-400);
   font-weight: 400;
-  margin-top: 0;
-  letter-spacing: 0.2px;
+  letter-spacing: 0.3px;
 }
 
+/* Admin role badge */
+.navbar-role-badge {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: rgba(255, 255, 255, 0.78);
+  background: rgba(100, 120, 160, 0.28);   /* neutral blue-grey, not purple */
+  padding: 0.25rem 0.65rem;
+  border-radius: var(--radius-full);
+  border: 1px solid rgba(100, 120, 160, 0.22);
+}
+
+/* Logged-in user display name — sits between System Active and the role badge */
+.navbar-user-identity {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.88);
+  max-width: 160px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  /* subtle left separator to visually group user info from status */
+  padding-left: 0.75rem;
+  border-left: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+/* Right side */
 .navbar-right {
   margin-left: auto;
   display: flex;
@@ -137,98 +349,246 @@ body {
   display: flex;
   align-items: center;
   gap: 0.45rem;
-  font-size: 0.76rem;
+  font-size: 0.74rem;
   font-weight: 500;
-  color: var(--color-slate-400);
+  color: rgba(255, 255, 255, 0.5);
   background: rgba(255, 255, 255, 0.06);
   padding: 0.35rem 0.85rem;
-  border-radius: 20px;
+  border-radius: var(--radius-full);
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
+/* Status dot — no glow animation; steady indicator for a calm dashboard */
 .status-dot {
-  width: 7px;
-  height: 7px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
-  background-color: #34d399;
+  background-color: #3dab85;   /* muted teal-green — alive but not shouting */
   display: inline-block;
-  box-shadow: 0 0 6px rgba(52, 211, 153, 0.5);
-  animation: pulse-dot 2s ease-in-out infinite;
+  flex-shrink: 0;
 }
 
-@keyframes pulse-dot {
-  0%, 100% { opacity: 1; box-shadow: 0 0 6px rgba(52, 211, 153, 0.5); }
-  50% { opacity: 0.5; box-shadow: 0 0 2px rgba(52, 211, 153, 0.2); }
+/* No pulse animation — security dashboards should feel stable, not anxious */
+
+/* ── Sidebar-collapsed: navbar brand aligns with 64px icon rail ─── */
+/* Applied via .navbar--sidebar-collapsed class toggled in Navbar.jsx  */
+.navbar--sidebar-collapsed .navbar-brand {
+  min-width: calc(var(--sidebar-collapsed-width) - 2rem);
 }
 
-.navbar-user {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.82rem;
-  color: var(--color-slate-400);
+/* .navbar-brand--collapsed is the class-based variant used in Navbar.jsx
+   when SidebarContext reports collapsed=true on desktop.                  */
+.navbar-brand--collapsed {
+  min-width: calc(var(--sidebar-collapsed-width) - 2rem);
 }
 
-.navbar-avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.78rem;
-  font-weight: 700;
-  color: white;
-  border: 2px solid rgba(255, 255, 255, 0.15);
+.btn-logout {
+  padding: 0.38rem 0.95rem;
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.82);
+  background: rgba(180, 50, 50, 0.45);   /* quieter red — present, not alarming */
+  border: 1px solid rgba(180, 50, 50, 0.3);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  font-family: inherit;
 }
 
-/* ============================
-   MAIN CONTENT LAYOUT
-   ============================ */
-.main-content {
-  display: flex;
-  flex: 1;
+.btn-logout:hover {
+  background: rgba(197, 48, 48, 0.7);
+  box-shadow: 0 2px 6px rgba(180, 50, 50, 0.25);
 }
 
-/* ============================
+/* ============================================================
    SIDEBAR
-   ============================ */
+   ============================================================ */
 .sidebar {
   width: var(--sidebar-width);
   min-height: calc(100vh - var(--navbar-height));
   background: var(--color-white);
-  border-right: 1px solid var(--color-slate-200);
+  /* Soft shadow-right instead of a flat border — more depth, less edge-hug */
+  border-right: none;
+  box-shadow: 1px 0 0 var(--color-slate-200),
+              4px 0 16px rgba(0, 0, 0, 0.04);
   display: flex;
   flex-direction: column;
   position: sticky;
   top: var(--navbar-height);
   height: calc(100vh - var(--navbar-height));
   overflow-y: auto;
+  overflow-x: hidden;
+  transition: width 0.2s var(--ease-out);
+  flex-shrink: 0;
+}
+
+/* ── Collapsed state (desktop icon-only) ────────────────── */
+.sidebar--collapsed {
+  width: var(--sidebar-collapsed-width);
+  overflow: visible;          /* lets CSS tooltips escape the 64px rail         */
+  /* Delay overflow switch until after the width transition, so labels are      */
+  /* clipped during the collapse animation, then open up for the tooltip.       */
+  transition: width 0.2s var(--ease-out), overflow 0s linear 0.2s;
+}
+
+/* Tighter header — removes empty grey space above the first nav icon */
+.sidebar--collapsed .sidebar-header {
+  justify-content: center;
+  padding: 0.6rem 0;
+}
+
+/* Centred pill touch-target (44 × 40 px minimum per HIG) */
+.sidebar--collapsed .sidebar-link {
+  justify-content: center;
+  padding: 0.6rem 0;
+  margin: 3px 10px;           /* 64 − 20 = 44 px wide pill                     */
+  gap: 0;
+  min-height: 40px;
+  border-radius: var(--radius-md);
+}
+
+/* Slightly larger icon when the label is hidden */
+.sidebar--collapsed .icon {
+  font-size: 1.2rem;
+  width: auto;
+}
+
+/* Hide the text label */
+.sidebar--collapsed .sidebar-link .label {
+  display: none;
+}
+
+/* Active pill — solid tint replaces left-edge accent at icon scale */
+.sidebar--collapsed .sidebar-link.active {
+  background: var(--color-primary-light);  /* #dbeafe — clearly "selected"     */
+  border-color: #93c5fd;
+  box-shadow: none;
+  color: var(--color-primary);
+}
+
+/* CSS tooltip — slides in from the right of the icon pill on hover */
+.sidebar--collapsed .sidebar-link::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  left: calc(100% + 10px);
+  top: 50%;
+  transform: translateY(-50%) translateX(-6px);
+  background: var(--color-navy);
+  color: #fff;
+  font-size: 0.76rem;
+  font-weight: 500;
+  padding: 0.28rem 0.65rem;
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.14s ease, transform 0.14s ease;
+  box-shadow: var(--shadow-md);
+  z-index: 300;
+}
+.sidebar--collapsed .sidebar-link:hover::after {
+  opacity: 1;
+  transform: translateY(-50%) translateX(0);
+}
+
+/* Divider becomes a simple centred rule in icon-only mode */
+.sidebar--collapsed .sidebar-divider {
+  margin: 0.75rem 0.5rem 0.25rem;
+  justify-content: center;
+}
+.sidebar--collapsed .sidebar-divider span {
+  display: none;
+}
+.sidebar--collapsed .sidebar-divider::after {
+  width: 36px;
+  flex: unset;
+}
+
+/* Compact footer — copyright hidden in JSX, only ThemeToggle remains */
+.sidebar--collapsed .sidebar-footer {
+  padding: 0.75rem 0;
+  align-items: center;
+}
+
+/* Tighten vertical nav breathing room in icon-only mode */
+.sidebar--collapsed .sidebar-nav {
+  padding: 0.4rem 0;
+}
+
+/* ── Collapse toggle button ──────────────────────────────── */
+.sidebar-toggle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  margin-left: auto;          /* right-align in the expanded header */
+  flex-shrink: 0;
+  background: none;
+  border: 1px solid transparent;
+  cursor: pointer;
+  font-size: 1rem;
+  color: var(--color-slate-400);
+  line-height: 1;
+  padding: 0;
+  border-radius: var(--radius-sm);
+  transition: color var(--transition-fast), background var(--transition-fast),
+              border-color var(--transition-fast);
+}
+.sidebar--collapsed .sidebar-toggle-btn {
+  margin-left: 0;             /* centre in the collapsed header */
+  margin-right: 0;
+}
+.sidebar-toggle-btn:hover {
+  background: var(--color-slate-100);
+  color: var(--color-navy-mid);
+  border-color: var(--color-slate-200);
+}
+
+/* ── Mobile drawer ───────────────────────────────────────── */
+/* On mobile the sidebar is normally hidden off-screen left */
+.sidebar-backdrop {
+  display: none;
 }
 
 .sidebar-header {
-  padding: 1.4rem 1.4rem 1rem;
+  padding: 1.5rem 1.5rem 1.1rem;
   border-bottom: 1px solid var(--color-slate-200);
+  display: flex;
+  align-items: center;         /* vertically centre h3 + toggle button */
+  gap: 0.5rem;
+  /* Match navbar height so the two top blocks form one optical row */
+  min-height: var(--navbar-height);
 }
 
-.sidebar-header h3 {
-  font-size: 0.68rem;
+/* Sidebar header — text column (menu label stacked above portal label) */
+.sidebar-header-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.18rem;
+  min-width: 0;           /* allow ellipsis on long portal labels */
+}
+
+.sidebar-menu-label {
+  font-size: 0.63rem;
   text-transform: uppercase;
-  letter-spacing: 1.5px;
+  letter-spacing: 1.6px;
   color: var(--color-slate-400);
   font-weight: 700;
 }
 
-.sidebar-subtitle {
-  margin-top: 0.15rem;
-  font-size: 0.8rem;
+.sidebar-portal-label {
+  font-size: 0.77rem;
   color: var(--color-slate-500);
-  font-weight: 500;
+  font-weight: 400;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .sidebar-nav {
-  padding: 0.6rem 0;
+  padding: 0.9rem 0;           /* more top breathing room above first link */
   flex: 1;
 }
 
@@ -236,12 +596,12 @@ body {
   display: flex;
   align-items: center;
   gap: 0.8rem;
-  padding: 0.65rem 1.2rem;
-  margin: 1px 0.65rem;
+  padding: 0.72rem 1.1rem;     /* tighter horizontal — visual indent from sidebar edge */
+  margin: 2px 0.9rem;          /* wider margin = links are visually centred in the rail  */
   border-radius: var(--radius-sm);
   color: var(--color-slate-500);
   text-decoration: none;
-  font-size: 0.88rem;
+  font-size: 0.87rem;
   font-weight: 500;
   transition: all var(--transition-fast);
   position: relative;
@@ -249,13 +609,13 @@ body {
 }
 
 .sidebar-link:hover {
-  background-color: var(--color-slate-100);
+  background-color: var(--color-slate-50);
   color: var(--color-navy-mid);
   border-color: var(--color-slate-200);
 }
 
 .sidebar-link.active {
-  background: linear-gradient(135deg, #eff6ff, #dbeafe);
+  background: var(--color-primary-50);
   color: var(--color-primary);
   font-weight: 600;
   border-color: var(--color-primary-light);
@@ -269,182 +629,114 @@ body {
   flex-shrink: 0;
 }
 
+.sidebar-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0.9rem 1.8rem 0.35rem;  /* aligns with the inset nav-link margin */
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-slate-400);
+}
+.sidebar-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--color-slate-200);
+}
+
 .label {
   font-weight: inherit;
 }
 
 .sidebar-footer {
-  padding: 0.85rem 1.4rem;
+  padding: 1.1rem 1.5rem;      /* matches updated header padding */
   border-top: 1px solid var(--color-slate-200);
-  font-size: 0.7rem;
+  font-size: 0.68rem;
   color: var(--color-slate-400);
   text-align: center;
   font-weight: 500;
   letter-spacing: 0.2px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.55rem;
 }
 
-/* ============================
+.sidebar-copyright {
+  display: block;
+}
+
+/* ============================================================
    PAGE CONTENT
-   ============================ */
+   ============================================================ */
 .page-content {
   flex: 1;
-  padding: 2rem 2.5rem;
+  padding: 2rem 2.75rem 3rem;  /* slightly wider left-right padding for clear sidebar gap */
   background-color: var(--color-bg);
   overflow-y: auto;
   min-height: calc(100vh - var(--navbar-height));
 }
 
-/* ---------- Page Header ---------- */
+.page-wrapper {
+  max-width: 1400px;
+  width: 100%;
+  margin: 0 auto;  /* centre content within the content area on wide viewports */
+}
+
+.page-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
 .page-header {
   margin-bottom: 1.75rem;
 }
 
 .page-header h1 {
-  font-size: 1.6rem;
+  font-size: 1.45rem;
   font-weight: 700;
   color: var(--color-navy);
-  margin-bottom: 0.25rem;
-  letter-spacing: -0.2px;
+  margin-bottom: 0.3rem;
+  letter-spacing: -0.3px;
+  line-height: 1.25;
 }
 
 .page-header p {
-  font-size: 0.9rem;
-  color: var(--color-slate-500);
+  font-size: 0.88rem;
+  color: var(--color-slate-600);
   margin: 0;
+  line-height: 1.55;
 }
 
-/* Legacy page headers (backwards compat) */
-.page-content h1 {
-  color: var(--color-navy);
-  margin-bottom: 0.25rem;
-  font-size: 1.6rem;
-  font-weight: 700;
-  letter-spacing: -0.2px;
-}
-
-.page-content > p {
-  color: var(--color-slate-500);
-  margin-bottom: 1.75rem;
-  font-size: 0.9rem;
-}
-
-/* ============================
+/* ============================================================
    SUMMARY / STAT CARDS
-   ============================ */
-.summary-section h2 {
-  color: var(--color-navy);
-  margin-bottom: 1.25rem;
-  font-size: 1.25rem;
-  font-weight: 600;
-}
-
+   ============================================================ */
 .summary-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  /* auto-fill: 4-col on wide screens, 2-col on tablet, 1-col on phone —
+     adapts to the remaining content width after the sidebar, no manual
+     breakpoints needed. 200px is wide enough for the card's internal layout. */
+  /* 165px minimum keeps 4-col at 812px (1100px viewport − 232px sidebar − 56px padding)
+     200px was causing 3+1 orphan on 1280×800 small-laptop screens */
+  grid-template-columns: repeat(auto-fill, minmax(165px, 1fr));
   gap: 1.25rem;
-  margin-bottom: 2rem;
-}
-
-.protection-status-panel {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.85rem;
-  padding: 1rem 1.1rem;
-  border-radius: var(--radius-md);
-  margin-bottom: 1.2rem;
-  border: 1px solid var(--color-info-border);
-  background: var(--color-info-bg);
-}
-
-.protection-status-panel.safe {
-  border-color: var(--color-success-border);
-  background: var(--color-success-bg);
-}
-
-.protection-status-panel.warning {
-  border-color: var(--color-warning-border);
-  background: var(--color-warning-bg);
-}
-
-.protection-status-icon {
-  font-size: 1.2rem;
-  line-height: 1;
-  margin-top: 2px;
-}
-
-.protection-status-panel h3 {
-  color: var(--color-navy);
-  font-size: 0.92rem;
-  margin-bottom: 0.35rem;
-}
-
-.protection-status-panel p {
-  color: var(--color-slate-700);
-  font-size: 0.82rem;
-  margin: 0;
-}
-
-.protection-status-content {
-  width: 100%;
-}
-
-.protection-status-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  gap: 0.42rem;
-}
-
-.protection-status-list li {
-  display: flex;
-  align-items: center;
-  gap: 0.55rem;
-  color: var(--color-slate-700);
-  font-size: 0.84rem;
-}
-
-.status-pill {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 98px;
-  padding: 0.22rem 0.55rem;
-  border-radius: 20px;
-  font-size: 0.69rem;
-  font-weight: 700;
-  letter-spacing: 0.25px;
-  text-transform: uppercase;
-  border: 1px solid transparent;
-}
-
-.status-pill.trusted {
-  background: var(--color-success-bg);
-  color: var(--color-success);
-  border-color: var(--color-success-border);
-}
-
-.status-pill.review {
-  background: var(--color-warning-bg);
-  color: var(--color-warning);
-  border-color: var(--color-warning-border);
-}
-
-.status-pill.blocked {
-  background: var(--color-danger-bg);
-  color: var(--color-danger);
-  border-color: var(--color-danger-border);
+  margin-bottom: 0; /* page-body gap (1.5rem) handles section spacing */
 }
 
 .summary-card {
   background: var(--color-white);
-  padding: 1.35rem 1.4rem;
+  padding: 1.4rem 1.5rem 1.3rem;
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
   transition: transform var(--transition-normal), box-shadow var(--transition-normal);
   border: 1px solid var(--color-slate-200);
   position: relative;
   overflow: hidden;
+  min-height: 100px;
 }
 
 .summary-card::before {
@@ -458,322 +750,166 @@ body {
 
 .summary-card:nth-child(1)::before { background: linear-gradient(90deg, #3b82f6, #60a5fa); }
 .summary-card:nth-child(2)::before { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
-.summary-card:nth-child(3)::before { background: linear-gradient(90deg, #ef4444, #f87171); }
-.summary-card:nth-child(4)::before { background: linear-gradient(90deg, #10b981, #34d399); }
+.summary-card:nth-child(3)::before { background: linear-gradient(90deg, #10b981, #34d399); }
+.summary-card:nth-child(4)::before { background: linear-gradient(90deg, #ef4444, #f87171); }
 
 .summary-card:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-lg);
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+}
+
+/* Suppress lift animation on touch devices — hover fires on tap and causes
+   a visible bounce. Touch users don't benefit from hover feedback anyway. */
+@media (hover: none) {
+  .summary-card:hover {
+    transform: none;
+    box-shadow: var(--shadow-sm);
+  }
 }
 
 .card-header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  margin-bottom: 0.75rem;
-}
-
-.summary-card .card-icon {
-  font-size: 1.6rem;
-  margin-bottom: 0.5rem;
-  display: block;
+  gap: 0.75rem;
 }
 
 .card-icon-bg {
-  width: 42px;
-  height: 42px;
+  width: 46px;
+  height: 46px;
   border-radius: var(--radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.25rem;
+  font-size: 1.35rem;
+  flex-shrink: 0;
 }
 
 .card-icon-bg.blue   { background: #eff6ff; }
 .card-icon-bg.amber  { background: #fffbeb; }
-.card-icon-bg.red    { background: #fef2f2; }
 .card-icon-bg.green  { background: #f0fdf4; }
+.card-icon-bg.red    { background: #fef2f2; }
 
 .summary-card h3 {
-  color: var(--color-slate-500);
-  font-size: 0.74rem;
+  color: var(--color-slate-600);
+  font-size: 0.72rem;
   text-transform: uppercase;
-  letter-spacing: 0.8px;
-  margin-bottom: 0.35rem;
+  letter-spacing: 0.9px;
+  margin-bottom: 0.5rem;
   font-weight: 600;
 }
 
 .summary-value {
-  font-size: 2rem;
+  font-size: 2.2rem;
   font-weight: 800;
   color: var(--color-navy);
-  line-height: 1.2;
+  line-height: 1.1;
   letter-spacing: -0.5px;
-}
-
-.summary-value-money {
-  font-size: 1.45rem;
-  letter-spacing: -0.2px;
+  margin-bottom: 0.3rem;
 }
 
 .summary-note {
-  margin-top: 0.35rem;
-  margin-bottom: 0;
+  margin: 0;
   color: var(--color-slate-500);
-  font-size: 0.78rem;
-  line-height: 1.45;
-  max-width: 220px;
+  font-size: 0.76rem;
+  line-height: 1.4;
 }
 
-.customer-insight-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 1.1rem;
-  margin-bottom: 1.4rem;
+.danger-text {
+  color: var(--color-danger) !important;
 }
 
-.customer-insight-card {
-  background: var(--color-white);
-  border: 1px solid var(--color-slate-200);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
-  padding: 1.2rem 1.25rem;
-}
-
-.customer-insight-card.warning {
-  border-top: 3px solid var(--color-warning);
-}
-
-.customer-insight-card.danger {
-  border-top: 3px solid var(--color-danger);
-}
-
-.customer-insight-card.info {
-  border-top: 3px solid var(--color-primary);
-}
-
-.customer-insight-header {
-  display: flex;
-  gap: 0.8rem;
-  align-items: flex-start;
-}
-
-.customer-insight-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
+/* ============================================================
+   STATUS PILLS & BADGES
+   ============================================================ */
+.status-pill {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.05rem;
-  background: var(--color-slate-50);
-  border: 1px solid var(--color-slate-200);
-  flex-shrink: 0;
+  gap: 0.3rem;
+  padding: 0.28rem 0.8rem;
+  border-radius: var(--radius-full);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.15px;
+  text-transform: uppercase;
+  border: 1px solid transparent;
+  white-space: nowrap;
+  line-height: 1.3;
 }
 
-.customer-insight-header h3 {
-  color: var(--color-navy);
-  font-size: 0.92rem;
-  margin-bottom: 0.2rem;
+/* Normal / Trusted — green */
+.status-pill.trusted,
+.status-pill.normal {
+  background: var(--color-success-bg);
+  color: var(--color-success);
+  border-color: var(--color-success-border);
 }
 
-.customer-insight-header p {
-  color: var(--color-slate-500);
-  font-size: 0.82rem;
-  line-height: 1.5;
+/* Review / Medium — amber */
+.status-pill.review,
+.status-pill.medium {
+  background: var(--color-warning-bg);
+  color: var(--color-warning);
+  border-color: var(--color-warning-border);
 }
 
-.customer-insight-value {
-  font-size: 2rem;
-  font-weight: 800;
-  color: var(--color-navy);
-  margin: 1rem 0 0.45rem;
-  line-height: 1;
+/* Blocked / Suspicious / High risk — red */
+.status-pill.blocked,
+.status-pill.suspicious,
+.status-pill.high-risk {
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
+  border-color: var(--color-danger-border);
 }
 
-.customer-insight-footnote {
-  color: var(--color-slate-500);
-  font-size: 0.78rem;
-  line-height: 1.5;
+/* Info — blue */
+.status-pill.info {
+  background: var(--color-info-bg);
+  color: var(--color-info);
+  border-color: var(--color-info-border);
 }
 
-.dashboard-section-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
-  gap: 1.2rem;
-}
-
-.dashboard-section-card {
-  overflow: hidden;
-}
-
-.dashboard-action-list {
-  padding: 1.1rem 1.5rem 1.35rem;
-  display: grid;
-  gap: 1rem;
-}
-
-.dashboard-action-item {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 0.85rem;
-  align-items: flex-start;
-}
-
-.dashboard-action-item h3 {
-  font-size: 0.9rem;
-  color: var(--color-navy);
-  margin-bottom: 0.2rem;
-}
-
-.dashboard-action-item p {
-  font-size: 0.82rem;
-  color: var(--color-slate-500);
-  line-height: 1.5;
-}
-
-.dashboard-action-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 76px;
-  padding: 0.28rem 0.65rem;
-  border-radius: 999px;
+/* Generic badge classes */
+.badge {
+  display: inline-block;
+  padding: 0.22rem 0.6rem;
+  border-radius: var(--radius-full);
   font-size: 0.68rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.4px;
-  border: 1px solid transparent;
-}
-
-.dashboard-action-badge.danger {
-  color: var(--color-danger);
-  background: var(--color-danger-bg);
-  border-color: var(--color-danger-border);
-}
-
-.dashboard-action-badge.warning {
-  color: var(--color-warning);
-  background: var(--color-warning-bg);
-  border-color: var(--color-warning-border);
-}
-
-.dashboard-action-badge.info {
-  color: var(--color-primary);
-  background: var(--color-info-bg);
-  border-color: var(--color-info-border);
-}
-
-.protection-activity-list {
-  padding: 1.1rem 1.2rem 1.25rem;
-  display: grid;
-  gap: 0.9rem;
-}
-
-.protection-activity-item {
-  border: 1px solid var(--color-slate-200);
-  border-radius: var(--radius-md);
-  padding: 1rem;
-  background: var(--color-slate-50);
-}
-
-.protection-activity-item.danger {
-  border-color: var(--color-danger-border);
-  background: #fff7f7;
-}
-
-.protection-activity-item.warning {
-  border-color: var(--color-warning-border);
-  background: #fffdf5;
-}
-
-.protection-activity-item.info {
-  border-color: var(--color-info-border);
-  background: #f8fbff;
-}
-
-.protection-activity-topline {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 0.5rem;
-}
-
-.protection-activity-time {
-  color: var(--color-slate-400);
-  font-size: 0.75rem;
   white-space: nowrap;
 }
 
-.protection-activity-item h3 {
-  color: var(--color-navy);
-  font-size: 0.94rem;
-  margin-bottom: 0.3rem;
+.badge-danger  { background: var(--color-danger-bg);  color: var(--color-danger);  border: 1px solid var(--color-danger-border); }
+.badge-success { background: var(--color-success-bg); color: var(--color-success); border: 1px solid var(--color-success-border); }
+.badge-warning { background: var(--color-warning-bg); color: var(--color-warning); border: 1px solid var(--color-warning-border); }
+.badge-info    { background: var(--color-info-bg);    color: var(--color-info);    border: 1px solid var(--color-info-border); }
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0.28rem 0.75rem;
+  border-radius: var(--radius-full);
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.35px;
 }
 
-.protection-activity-item p {
-  color: var(--color-slate-500);
-  font-size: 0.82rem;
-  line-height: 1.5;
-}
+.status-badge.suspicious { background: var(--color-danger-bg);  color: var(--color-danger);  border: 1px solid var(--color-danger-border); }
+.status-badge.normal     { background: var(--color-success-bg); color: var(--color-success); border: 1px solid var(--color-success-border); }
 
-.protection-activity-meta {
-  display: flex;
-  gap: 1rem;
-  flex-wrap: wrap;
-  margin-top: 0.6rem;
-  color: var(--color-slate-400);
-  font-size: 0.76rem;
-}
-
-.protection-activity-action {
-  margin-top: 0.65rem;
-  color: var(--color-slate-700);
-  font-size: 0.8rem;
-  font-weight: 600;
-}
-
-.dashboard-empty-state {
-  border: none;
-  border-radius: 0;
-  box-shadow: none;
-}
-
-/* ============================
+/* ============================================================
    DATA TABLES
-   ============================ */
+   ============================================================ */
 .table-container {
   background: var(--color-white);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
   overflow: hidden;
-  border: 1px solid var(--color-slate-200);
-}
-
-.table-header {
-  padding: 1rem 1.5rem;
-  border-bottom: 1px solid var(--color-slate-200);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: var(--color-slate-50);
-}
-
-.table-header h2 {
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: var(--color-navy);
-  margin: 0;
-}
-
-.table-count {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--color-slate-500);
-  background: var(--color-white);
-  padding: 0.2rem 0.7rem;
-  border-radius: 20px;
   border: 1px solid var(--color-slate-200);
 }
 
@@ -784,25 +920,34 @@ body {
 
 .data-table th,
 .data-table td {
-  padding: 0.8rem 1.25rem;
+  padding: 0.7rem 1.1rem;
   text-align: left;
-  font-size: 0.86rem;
+  font-size: 0.84rem;
 }
 
 .data-table th {
-  background-color: var(--color-slate-50);
-  font-weight: 600;
-  color: var(--color-slate-500);
+  background: linear-gradient(180deg, var(--color-slate-50), #eef1f6);
+  font-weight: 700;
+  color: var(--color-slate-600);
   text-transform: uppercase;
-  font-size: 0.7rem;
-  letter-spacing: 0.6px;
+  font-size: 0.68rem;
+  letter-spacing: 0.8px;
   white-space: nowrap;
   border-bottom: 2px solid var(--color-slate-200);
+  /* sticky only works correctly when the scroll container is the viewport.
+     When table-container gets overflow-x:auto (≤1100px), 'sticky top:0' loses
+     its stacking context in some browsers (notably old Safari). The header is
+     still perfectly usable without sticky at those widths, so we keep it for
+     desktop and disable it to avoid the Safari ghost-header bug. */
+  position: sticky;
+  top: 0;
+  z-index: 1;
 }
 
 .data-table td {
-  border-bottom: 1px solid #f3f4f6;
+  border-bottom: 1px solid var(--color-slate-100);
   color: var(--color-slate-700);
+  vertical-align: middle;
 }
 
 .data-table tbody tr {
@@ -810,231 +955,320 @@ body {
 }
 
 .data-table tbody tr:hover {
-  background-color: #f8fafc;
+  background-color: var(--color-primary-50) !important;
 }
 
 .data-table tbody tr:nth-child(even) {
-  background-color: #fafbfd;
+  background-color: var(--color-slate-50);
 }
 
-.data-table tbody tr:nth-child(even):hover {
-  background-color: var(--color-slate-100);
+/* Utility cell classes */
+.amount-cell {
+  font-weight: 500;
+  color: var(--color-slate-600);
+  font-variant-numeric: tabular-nums;
 }
 
-/* ============================
-   BADGES & STATUS INDICATORS
-   ============================ */
-.status-badge {
-  display: inline-flex;
+/* ============================================================
+   MESSAGE HISTORY PAGE — stat strip, sender cell, confidence
+   ============================================================ */
+
+/* Compact stat row above the table */
+.history-stat-strip {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.history-stat {
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 5px;
-  padding: 0.3rem 0.8rem;
-  border-radius: 20px;
-  font-size: 0.7rem;
+  background: var(--color-white);
+  border: 1px solid var(--color-slate-200);
+  border-radius: var(--radius-md);
+  padding: 0.6rem 1.1rem;
+  min-width: 80px;
+  box-shadow: var(--shadow-xs);
+  flex: 1;
+  text-align: center;
+}
+
+.history-stat-value {
+  font-size: 1.55rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-navy);
+  line-height: 1.1;
+}
+
+.history-stat-label {
+  font-size: 0.65rem;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.4px;
+  letter-spacing: 0.5px;
+  color: var(--color-slate-400);
+  margin-top: 0.2rem;
 }
 
-.status-badge.suspicious {
-  background-color: var(--color-danger-bg);
-  color: var(--color-danger);
-  border: 1px solid var(--color-danger-border);
+/* Colour accents on individual stat tiles */
+.history-stat--genuine   .history-stat-value { color: var(--color-success); }
+.history-stat--suspicious .history-stat-value { color: var(--color-warning); }
+.history-stat--fraud     .history-stat-value { color: var(--color-danger); }
+.history-stat--oos       .history-stat-value { color: var(--color-slate-400); }
+
+/* Sender cell styling */
+.history-sender {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
 }
 
-.status-badge.normal {
-  background-color: var(--color-success-bg);
-  color: var(--color-success);
-  border: 1px solid var(--color-success-border);
+.history-sender-num {
+  font-size: 0.74rem;
+  color: var(--color-slate-400);
+  font-family: ui-monospace, 'Cascadia Code', 'Consolas', monospace;
+  font-variant-numeric: tabular-nums;
 }
 
-.badge {
-  display: inline-block;
-  padding: 0.25rem 0.65rem;
-  border-radius: 20px;
-  font-size: 0.7rem;
+.input-method-icon {
+  font-size: 0.8rem;
+  opacity: 0.7;
+}
+
+/* Unknown sender placeholder */
+.history-unknown {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.history-unknown-text {
+  font-size: 0.79rem;
+  color: var(--color-slate-500);
+  font-style: italic;
+}
+
+/* Amount in table */
+.history-amount {
+  font-variant-numeric: tabular-nums;
   font-weight: 600;
+  color: var(--color-navy);
+}
+
+/* Null placeholder — lighter than the data, not ――-assertive */
+.history-null {
+  color: var(--color-slate-300);
+  font-size: 0.85rem;
+}
+
+/* Confidence cell */
+.history-confidence-cell {
+  font-variant-numeric: tabular-nums;
+}
+
+.history-confidence {
+  font-weight: 600;
+  font-size: 0.84rem;
+  color: var(--color-slate-600);
+}
+
+/* ============================================================
+   MESSAGE CHECK DETAIL PAGE — metadata row, section heading
+   ============================================================ */
+
+/* Compact "check metadata" row below the back link */
+.detail-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.5rem;
+  background: var(--color-slate-50);
+  border: 1px solid var(--color-slate-200);
+  border-radius: var(--radius-md);
+  padding: 0.65rem 1rem;
+  margin-bottom: 1rem;
+  font-size: 0.82rem;
+}
+
+.detail-meta-item {
+  display: flex;
+  align-items: baseline;
+  gap: 0.35rem;
+}
+
+.detail-meta-label {
+  font-size: 0.67rem;
   text-transform: uppercase;
-  letter-spacing: 0.4px;
+  letter-spacing: 0.5px;
+  color: var(--color-slate-400);
+  font-weight: 700;
   white-space: nowrap;
 }
 
-.badge-danger {
-  background-color: var(--color-danger-bg);
-  color: var(--color-danger);
-  border: 1px solid var(--color-danger-border);
-}
-
-.badge-success {
-  background-color: var(--color-success-bg);
-  color: var(--color-success);
-  border: 1px solid var(--color-success-border);
-}
-
-.badge-warning {
-  background-color: var(--color-warning-bg);
-  color: var(--color-warning);
-  border: 1px solid var(--color-warning-border);
-}
-
-.badge-info {
-  background-color: var(--color-info-bg);
-  color: var(--color-info);
-  border: 1px solid var(--color-info-border);
-}
-
-/* Severity Badges */
-.severity-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 0.25rem 0.7rem;
-  border-radius: 20px;
-  font-size: 0.7rem;
+.detail-meta-val {
+  font-size: 0.82rem;
   font-weight: 600;
+  color: var(--color-navy);
+}
+
+.detail-meta-val.mono {
+  font-family: ui-monospace, 'Cascadia Code', 'Consolas', monospace;
+  font-size: 0.78rem;
+}
+
+/* Sub-heading inside the detail card — slimmer than .section-title */
+.detail-section-heading {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.4px;
+  letter-spacing: 0.5px;
+  color: var(--color-slate-500);
+  margin: 1.1rem 0 0.6rem;
 }
 
-.severity-High {
-  background-color: var(--color-danger-bg);
-  color: var(--color-danger);
-  border: 1px solid var(--color-danger-border);
+/* Highlight tile for the primary amount field */
+.extracted-item--highlight {
+  border-color: var(--color-primary-light);
+  background: var(--color-primary-50);
 }
 
-.severity-Medium {
-  background-color: var(--color-warning-bg);
-  color: var(--color-warning);
-  border: 1px solid var(--color-warning-border);
+/* Raw message section inside detail card */
+.detail-raw-section {
+  margin-top: 0.75rem;
 }
 
-.severity-Low {
-  background-color: var(--color-success-bg);
-  color: var(--color-success);
-  border: 1px solid var(--color-success-border);
+.detail-raw-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
 }
 
-/* ============================
-   ALERT / MESSAGE BOXES
-   ============================ */
+.detail-raw-copy-btn {
+  background: none;
+  border: 1px solid var(--color-slate-300);
+  border-radius: var(--radius-sm);
+  color: var(--color-slate-500);
+  font-size: 0.74rem;
+  padding: 0.2rem 0.55rem;
+  cursor: pointer;
+  line-height: 1;
+  transition: border-color 0.15s, color 0.15s;
+}
+.detail-raw-copy-btn:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.explanation-cell {
+  font-size: 0.79rem;
+  max-width: 300px;
+  line-height: 1.5;
+  color: var(--color-slate-500);
+}
+
+
+/* ============================================================
+   MESSAGE BOXES
+   ============================================================ */
 .message-box {
   display: flex;
   align-items: flex-start;
-  gap: 0.7rem;
-  padding: 0.9rem 1.2rem;
+  gap: 0.75rem;
+  padding: 0.95rem 1.25rem;
   border-radius: var(--radius-md);
   font-size: 0.87rem;
   font-weight: 500;
-  margin-bottom: 1.25rem;
-  line-height: 1.5;
+  margin-bottom: 1rem;
+  line-height: 1.6;
+  border-left-width: 3px;
+  border-left-style: solid;
 }
 
 .message-box.success {
   background-color: var(--color-success-bg);
   color: #15803d;
   border: 1px solid var(--color-success-border);
+  border-left-color: var(--color-success);
 }
 
 .message-box.error {
   background-color: var(--color-danger-bg);
   color: var(--color-danger);
   border: 1px solid var(--color-danger-border);
+  border-left-color: var(--color-danger);
 }
 
 .message-box.warning {
   background-color: var(--color-warning-bg);
-  color: #b45309;
+  color: #92400e;
   border: 1px solid var(--color-warning-border);
+  border-left-color: var(--color-warning);
 }
 
 .message-box.info {
   background-color: var(--color-info-bg);
   color: var(--color-primary-dark);
   border: 1px solid var(--color-info-border);
+  border-left-color: var(--color-info);
 }
 
 .message-icon {
-  font-size: 1.1rem;
+  font-size: 1.05rem;
   flex-shrink: 0;
   margin-top: 1px;
 }
 
-/* ============================
-   ALERT CARDS
-   ============================ */
-.alerts-container {
-  display: grid;
-  gap: 1rem;
+.pending-hint {
+  font-size: 0.82rem;
+  opacity: 0.8;
+  margin-top: 0.25rem;
+  display: inline-block;
 }
 
-.alert-card {
-  background: var(--color-white);
-  padding: 1.5rem;
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
-  border-left: 4px solid var(--color-primary);
-  border: 1px solid var(--color-slate-200);
-  border-left: 4px solid var(--color-primary);
-}
-
-.alert-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
-}
-
-.alert-header h3 {
-  color: var(--color-navy);
-  margin: 0;
-}
-
-.alert-card p {
-  margin-bottom: 0.5rem;
-  color: var(--color-slate-500);
-}
-
-.alert-actions {
-  margin-top: 1rem;
-  display: flex;
-  gap: 0.5rem;
-}
-
-/* ============================
+/* ============================================================
    EMPTY STATE
-   ============================ */
+   ============================================================ */
 .empty-state {
   text-align: center;
-  padding: 3.5rem 1.5rem;
+  padding: 4rem 2rem;
   color: var(--color-slate-400);
   background: var(--color-white);
   border-radius: var(--radius-lg);
-  border: 1px dashed var(--color-slate-200);
+  border: 2px dashed var(--color-slate-200);
 }
 
 .empty-state-icon {
-  font-size: 2.75rem;
-  margin-bottom: 0.85rem;
-  opacity: 0.7;
+  font-size: 3.25rem;
+  margin-bottom: 1rem;
+  opacity: 0.65;
+  display: block;
 }
 
 .empty-state p {
-  font-size: 0.95rem;
-  color: var(--color-slate-400);
+  font-size: 0.92rem;
+  color: var(--color-slate-500);
   margin: 0;
   font-weight: 500;
+  line-height: 1.5;
 }
 
-/* ============================
+.empty-state p + p {
+  margin-top: 0.35rem;
+}
+
+/* ============================================================
    LOADING STATE
-   ============================ */
+   ============================================================ */
 .loading-state {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   padding: 4rem 1.5rem;
-  gap: 1rem;
+  gap: 1.15rem;
   background: var(--color-white);
   border-radius: var(--radius-lg);
   border: 1px solid var(--color-slate-200);
@@ -1046,7 +1280,7 @@ body {
   border: 3px solid var(--color-slate-200);
   border-top-color: var(--color-primary);
   border-radius: 50%;
-  animation: spin 0.7s linear infinite;
+  animation: spin 0.65s linear infinite;
 }
 
 @keyframes spin {
@@ -1055,66 +1289,591 @@ body {
 
 .loading-state p {
   color: var(--color-slate-500);
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   margin: 0;
   font-weight: 500;
 }
 
-/* ============================
+/* ============================================================
    FORMS
-   ============================ */
-.form-container {
-  max-width: 540px;
-  margin: 0 auto;
+   ============================================================ */
+.form-card {
   background: var(--color-white);
-  padding: 2rem 2.25rem;
+  padding: 1.75rem 2rem;
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
   border: 1px solid var(--color-slate-200);
+  margin-bottom: 1.5rem;
+}
+
+.form-card h3 {
+  margin-bottom: 1.35rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--color-navy);
+  padding-bottom: 0.75rem;
+  /* slate-200 instead of slate-100 — more visible section break */
+  border-bottom: 1px solid var(--color-slate-200);
+}
+
+.form-card .btn-primary {
+  width: 100%;
+  padding: 0.7rem 1.25rem;
+  font-size: 0.9rem;
+  margin-top: 0.5rem;
+  /* Guarantee 44px height — calculated height at 0.9rem/1.2 line-height is
+     ~11.2+21.6+11.2 = 44px but varies by OS font metrics. Explicit floor. */
+  min-height: 44px;
+}
+
+/* ============================================================
+   WALLETS PAGE — form layout, wallet cards, provider chips
+   ============================================================ */
+
+/* Centred max-width column for all wallet page content */
+.wallets-page-inner {
+  max-width: 960px;
+  width: 100%;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+}
+
+/* 2-column grid: number field (wider) + provider select (narrower) */
+.wallet-form-grid {
+  display: grid;
+  grid-template-columns: 3fr 2fr;
+  gap: 0 1rem;
+}
+
+/* Form card fills the wallets-page-inner column — override base padding for a roomier feel */
+.wallet-form-card {
+  width: 100%;
+  padding: 1.6rem 2rem 1.4rem;
+  margin-bottom: 0;   /* gap handled by .wallets-page-inner flex gap */
+}
+
+/* Helper hint beside a label */
+.form-label-hint {
+  margin-left: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: var(--color-slate-400);
+  font-style: normal;
+}
+
+/* Checkbox row: contained option card inside the form */
+.wallet-checkbox-row {
+  background: var(--color-slate-50);
+  border: 1px solid var(--color-slate-200);
+  border-radius: var(--radius-sm);
+  padding: 0.65rem 0.9rem;
+  margin-top: 0;
+}
+
+.wallet-checkbox-row .checkbox-label {
+  align-items: flex-start;
+  gap: 0.7rem;
+  min-height: unset;
+  padding: 0;
+  font-weight: 600;   /* lift label weight to match form labels */
+  color: var(--color-navy);
+}
+
+.wallet-checkbox-row .checkbox-label input[type="checkbox"] {
+  margin-top: 0.18rem;   /* optical align with text cap-height */
+  flex-shrink: 0;
+  width: 1rem;
+  height: 1rem;
+}
+
+.checkbox-hint {
+  display: block;
+  font-size: 0.76rem;
+  font-weight: 400;
+  color: var(--color-slate-500);
+  margin-top: 0.25rem;
+  line-height: 1.5;
+}
+
+/* Form footer: security note on its own row, button right-aligned below */
+.wallet-form-footer {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.6rem;
+  margin-top: 1.15rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--color-slate-200);
+}
+
+.form-security-note {
+  font-size: 0.8rem;
+  color: var(--color-slate-600);   /* was slate-500 — lifted one step for readability */
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* Button sits on its own row, pinned to the right */
+.wallet-submit-btn {
+  align-self: flex-end;
+  width: auto !important;
+  min-width: 148px;
+  padding: 0.65rem 1.75rem;
+  font-size: 0.9rem;
+  min-height: 42px;
+  white-space: nowrap;
+}
+
+/* Count badge next to section-title */
+.section-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-slate-100);
+  color: var(--color-slate-500);
+  border-radius: var(--radius-full);
+  font-size: 0.72rem;
+  font-weight: 700;
+  min-width: 1.4rem;
+  height: 1.4rem;
+  padding: 0 0.4rem;
+  letter-spacing: 0;
+}
+
+/* ---- Wallet cards list ---- */
+.wallet-card-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.wallet-card {
+  background: var(--color-white);
+  border: 1px solid var(--color-slate-200);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xs);
+  display: flex;
+  flex-direction: row;       /* identity left, actions right */
+  align-items: stretch;
+  gap: 0;
+  overflow: hidden;          /* clip action panel bg to card radius */
+  transition: box-shadow var(--transition-fast);
+}
+
+.wallet-card:hover {
+  box-shadow: var(--shadow-sm);
+}
+
+/* Primary wallet: stronger accent and a faint success tint at top */
+.wallet-card--primary {
+  border-left: 4px solid var(--color-success);
+}
+
+/* Card body: wallet identity information */
+.wallet-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  flex: 1;
+  min-width: 0;
+  padding: 0.9rem 1.25rem;
+}
+
+/* Name + primary badge inline */
+.wallet-card-name-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+/* Provider chip + masked number inline */
+.wallet-card-sub-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.wallet-card-name {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--color-navy);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.wallet-primary-badge {
+  font-size: 0.67rem;
+}
+
+.wallet-card-number {
+  font-family: ui-monospace, "SF Mono", "Consolas", monospace;
+  font-size: 0.83rem;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.06em;
+  color: var(--color-slate-500);
+}
+
+/* Action panel: sits to the right of the card body */
+.wallet-card-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+  padding: 0.75rem 1rem;
+  border-left: 1px solid var(--color-slate-100);
+}
+
+/* Inline confirm-remove row */
+.wallet-confirm-remove {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.wallet-confirm-text {
+  font-size: 0.78rem;
+  color: var(--color-slate-600);
+  white-space: nowrap;
+}
+
+/* Ghost action button — slate text, no background */
+.btn-ghost {
+  background: none;
+  border: 1px solid var(--color-slate-200);
+  border-radius: var(--radius-sm);
+  color: var(--color-slate-600);
+  font-size: 0.78rem;
+  font-weight: 600;
+  font-family: inherit;
+  padding: 0.3rem 0.7rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all var(--transition-fast);
+  min-height: 32px;
+}
+
+.btn-ghost:hover {
+  background: var(--color-slate-50);
+  border-color: var(--color-slate-300);
+  color: var(--color-navy);
+}
+
+.btn-ghost:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* Danger ghost — red text, no fill */
+.btn-danger-ghost {
+  background: none;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  color: var(--color-danger);
+  font-size: 0.78rem;
+  font-weight: 600;
+  font-family: inherit;
+  padding: 0.3rem 0.7rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all var(--transition-fast);
+  min-height: 32px;
+}
+
+.btn-danger-ghost:hover {
+  background: var(--color-danger-bg);
+  border-color: var(--color-danger-border);
+}
+
+.btn-danger-ghost:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* ---- Provider chips ---- */
+.wallet-provider-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.22rem 0.72rem;
+  border-radius: var(--radius-full);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.25px;
+  text-transform: uppercase;
+  border: 1px solid transparent;
+}
+
+.wallet-provider-mtn {
+  background: #fff8e1;
+  color: #7a5000;
+  border-color: #f5d888;
+}
+
+.wallet-provider-telecel {
+  background: #fff1f2;
+  color: #991b1b;
+  border-color: #fecaca;
+}
+
+.wallet-provider-airteltigo {
+  background: var(--color-primary-50);
+  color: var(--color-primary-dark);
+  border-color: var(--color-primary-light);
+}
+
+/* ---- Responsive overrides ---- */
+@media (max-width: 600px) {
+  .wallet-form-grid {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .wallet-form-footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .wallet-submit-btn {
+    width: 100% !important;
+  }
+
+  /* On narrow screens, revert card to column layout */
+  .wallet-card {
+    flex-direction: column;
+  }
+
+  /* Card body/actions: tighter padding on narrow screens */
+  .wallet-card-body {
+    padding: 0.85rem 1rem 0.7rem;
+  }
+
+  .wallet-card-actions {
+    padding: 0.55rem 0.9rem;
+    border-left: none;
+    border-top: 1px solid var(--color-slate-100);
+    justify-content: flex-end;
+  }
+
+  .wallet-confirm-remove {
+    flex-wrap: wrap;
+  }
+
+  /* Footer: security note full-width, button full-width below */
+  .wallet-submit-btn {
+    align-self: stretch;
+    width: 100% !important;
+    min-width: unset;
+    justify-content: center;
+  }
+}
+
+
+.section-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--color-navy);
+  margin-top: 0.5rem;
+  margin-bottom: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  letter-spacing: -0.05px;
+  border-bottom: 1px solid var(--color-slate-200);
+  padding-bottom: 0.5rem;
+}
+
+/* Wallets-page stronger heading — wallets-section-header resets the
+   margin since wallets-page-inner flex gap handles spacing */
+.wallets-section-header {
+  margin-top: 0;
+  margin-bottom: 0;
+  padding-top: 0.25rem;   /* subtle breathing room above the section title */
+}
+
+.wallets-section-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: -0.1px;
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.wallets-count {
+  background: var(--color-primary-50);
+  color: var(--color-primary-dark);
+  border: 1px solid var(--color-primary-light);
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0 0.55rem;
+  min-width: 1.5rem;
+  height: 1.5rem;
+}
+
+/* ============================================================
+   DASHBOARD INSIGHT STRIP
+   Compact metric bar below the summary cards
+   ============================================================ */
+.dashboard-insight {
+  background: var(--color-white);
+  border: 1px solid var(--color-slate-200);
+  border-radius: var(--radius-lg);
+  padding: 1rem 1.5rem;
+  box-shadow: var(--shadow-xs);
+}
+
+.insight-row {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  flex-wrap: wrap;
+}
+
+.insight-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0 1.25rem;
+  flex: 1;
+  /* 120px minimum keeps the 3-item strip on one row down to ~400px content width;
+     at ≤480px the media query below reduces this and hides the dividers.     */
+  min-width: 120px;
+}
+
+.insight-item:first-child {
+  padding-left: 0;
+}
+
+.insight-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+  font-weight: 600;
+  color: var(--color-slate-500);
+}
+
+.insight-value {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--color-navy);
+  letter-spacing: -0.2px;
+  line-height: 1.2;
+}
+
+.insight-divider {
+  width: 1px;
+  height: 32px;
+  background: var(--color-slate-200);
+  flex-shrink: 0;
+}
+
+.form-row {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 0;
+}
+
+.form-row .form-group {
+  flex: 1;
 }
 
 .form-group {
-  margin-bottom: 1.2rem;
+  margin-bottom: 1.15rem;
 }
 
 .form-group label {
   display: block;
-  font-size: 0.82rem;
+  font-size: 0.8rem;
   font-weight: 600;
-  color: var(--color-slate-700);
+  color: var(--color-slate-600);
   margin-bottom: 0.4rem;
   letter-spacing: 0.1px;
 }
 
-.form-control {
+.form-group input:not([type="checkbox"]),
+.form-group select {
   width: 100%;
-  padding: 0.6rem 0.9rem;
-  border: 1.5px solid #d1d5db;
+  padding: 0.6rem 0.85rem;
+  border: 1.5px solid var(--color-slate-300);
   border-radius: var(--radius-sm);
-  font-size: 0.88rem;
+  font-size: 0.87rem;
   color: var(--color-navy-mid);
   background: var(--color-white);
-  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
   font-family: inherit;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  /* Prevent native arrow overriding theme colours on iOS/Android */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  /* min-height: ensures ≥44px WCAG touch target on all controls */
+  min-height: 44px;
 }
 
-.form-control:hover {
-  border-color: #9ca3af;
+/* Custom chevron for <select> — replaces the native arrow removed by appearance:none */
+.form-group select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2364748b' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  padding-right: 2.25rem;
 }
 
-.form-control:focus {
-  outline: none;
+.form-group input:not([type="checkbox"]):hover,
+.form-group select:hover {
+  border-color: var(--color-slate-400);
+}
+
+.form-group input:not([type="checkbox"]):focus,
+.form-group select:focus {
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18);
+}
+/* Mouse/touch: suppress browser outline (custom box-shadow is the indicator) */
+.form-group input:not([type="checkbox"]):focus:not(:focus-visible),
+.form-group select:focus:not(:focus-visible) {
+  outline: none;
 }
 
-.form-control::placeholder {
-  color: #9ca3af;
+.form-group input:not([type="checkbox"])::placeholder {
+  color: var(--color-slate-400);
 }
 
-/* ============================
+.form-group input[type="checkbox"] {
+  width: auto;
+  margin-right: 0.5rem;
+  accent-color: var(--color-primary);
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  font-size: 0.87rem;
+  font-weight: 500;
+  cursor: pointer;
+  color: var(--color-slate-600);
+  /* 44px minimum touch target — WCAG 2.5.5 Success Criterion */
+  min-height: 44px;
+}
+
+/* ============================================================
+   BUTTON ROW UTILITY
+   Use .btn-row instead of ad-hoc inline flex on action button groups.
+   Wraps responsively; stacks full-width at ≤480px via media query above.
+   ============================================================ */
+.btn-row {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-top: 1rem;
+}
+
+/* ============================================================
    BUTTONS
-   ============================ */
+   ============================================================ */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -1124,7 +1883,7 @@ body {
   border: none;
   border-radius: var(--radius-sm);
   cursor: pointer;
-  font-size: 0.88rem;
+  font-size: 0.87rem;
   font-weight: 600;
   font-family: inherit;
   transition: all var(--transition-fast);
@@ -1133,584 +1892,2005 @@ body {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  background: linear-gradient(135deg, #2d6fd4 0%, #2256b5 100%);  /* calmer, less electric */
   color: var(--color-white);
-  box-shadow: 0 1px 3px rgba(37, 99, 235, 0.3);
+  box-shadow: 0 1px 3px rgba(34, 86, 181, 0.2);
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 600;
+  font-size: 0.87rem;
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
 }
 
 .btn-primary:hover {
   background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+  box-shadow: 0 3px 10px rgba(34, 86, 181, 0.22);
   transform: translateY(-1px);
 }
 
 .btn-primary:active {
   transform: translateY(0);
-  box-shadow: 0 1px 3px rgba(37, 99, 235, 0.3);
+  box-shadow: 0 1px 3px rgba(34, 86, 181, 0.2);
 }
 
-.btn-secondary {
-  background-color: var(--color-slate-100);
-  color: var(--color-slate-500);
-  border: 1px solid var(--color-slate-200);
-}
-
-.btn-secondary:hover {
-  background-color: var(--color-slate-200);
-  color: var(--color-slate-700);
-}
-
-.btn:disabled {
-  opacity: 0.5;
+.btn:disabled,
+.btn-primary:disabled {
+  opacity: 0.55;
   cursor: not-allowed;
   transform: none !important;
   box-shadow: none !important;
 }
 
-/* ============================
-   LOGIN PAGE
-   ============================ */
-.login-page {
-  min-height: 100vh;
+/* ============================================================
+   AUTH PAGES (Login / Register)
+   ============================================================ */
+.auth-page {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #0f172a 100%);
+  min-height: calc(100vh - var(--navbar-height) - 4rem);
+  padding: 2rem 1rem;
 }
 
-.login-card {
+.auth-card {
   background: var(--color-white);
-  padding: 2.5rem;
+  padding: 2.75rem 2.5rem 2.25rem;
   border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-xl);
+  box-shadow: var(--shadow-lg);
   width: 100%;
-  max-width: 420px;
-  text-align: center;
+  max-width: 440px;
+  border: 1px solid var(--color-slate-200);
 }
 
-.login-card h1 {
-  font-size: 1.5rem;
+.auth-logo {
+  font-size: 2.75rem;
+  margin-bottom: 0.75rem;
+  text-align: center;
+  display: block;
+}
+
+.auth-card h1 {
+  font-size: 1.55rem;
+  font-weight: 800;
   color: var(--color-navy);
   margin-bottom: 0.3rem;
+  text-align: center;
+  letter-spacing: -0.3px;
 }
 
-.login-card p {
+.auth-card > p {
   color: var(--color-slate-500);
+  font-size: 0.88rem;
+  margin-bottom: 1.75rem;
+  text-align: center;
+  line-height: 1.5;
+}
+
+.auth-card .message-box {
+  margin-bottom: 1.25rem;
+}
+
+.auth-card .form-group input {
+  padding: 0.7rem 0.9rem;
   font-size: 0.9rem;
-  margin-bottom: 1.5rem;
 }
 
-/* ============================
-   TRANSACTION TRUST & PROTECTION
-   Styles for the updated Transactions page.
-   Covers direction badges, trust/verification
-   badges, row highlighting, expand/collapse
-   detail panel, and detail grid.
-   ============================ */
-
-/* ── Direction badges ──────────────────────────────────────────── */
-.badge-dir-incoming {
-  background-color: #ecfdf5;
-  color: #059669;
-  border: 1px solid #a7f3d0;
+.auth-btn {
+  width: 100%;
+  padding: 0.75rem 1.25rem;
+  font-size: 0.92rem;
+  margin-top: 0.25rem;
 }
 
-.badge-dir-outgoing {
-  background-color: #fef3c7;
-  color: #b45309;
-  border: 1px solid #fde68a;
+/* ── Password show/hide toggle ── */
+.password-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
 }
 
-/* ── Trust level badges ────────────────────────────────────────── */
-.badge-trust-trusted {
-  background-color: var(--color-success-bg);
-  color: var(--color-success);
-  border: 1px solid var(--color-success-border);
+.password-input-wrapper input {
+  flex: 1;
+  padding-right: 2.8rem;
 }
 
-.badge-trust-warning {
-  background-color: var(--color-warning-bg);
-  color: var(--color-warning);
-  border: 1px solid var(--color-warning-border);
-}
-
-.badge-trust-high-risk {
-  background-color: var(--color-danger-bg);
-  color: var(--color-danger);
-  border: 1px solid var(--color-danger-border);
-}
-
-/* ── Verification status badges ────────────────────────────────── */
-.badge-verify-verified {
-  background-color: var(--color-success-bg);
-  color: var(--color-success);
-  border: 1px solid var(--color-success-border);
-}
-
-.badge-verify-unverified {
-  background-color: var(--color-warning-bg);
-  color: var(--color-warning);
-  border: 1px solid var(--color-warning-border);
-}
-
-.badge-verify-suspicious {
-  background-color: var(--color-danger-bg);
-  color: var(--color-danger);
-  border: 1px solid var(--color-danger-border);
-}
-
-/* ── Row highlighting ──────────────────────────────────────────── */
-/* Blocked rows get a persistent red-tinted background */
-.tx-row-blocked {
-  background-color: #fef2f2 !important;
-  border-left: 3px solid var(--color-danger);
-}
-
-/* Suspicious (but not blocked) rows get an amber tint */
-.tx-row-suspicious {
-  background-color: #fffbeb !important;
-  border-left: 3px solid var(--color-warning);
-}
-
-.tx-row-review {
-  background-color: #eff6ff !important;
-  border-left: 3px solid var(--color-primary);
-}
-
-.protection-chip-stack {
-  display: grid;
-  gap: 0.35rem;
-  min-width: 170px;
-}
-
-.protection-chip {
-  display: inline-flex;
+.password-toggle-btn {
+  position: absolute;
+  right: 0.6rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0.25rem;
+  color: var(--color-slate-400);
+  transition: color var(--transition-fast);
+  display: flex;
   align-items: center;
   justify-content: center;
-  width: fit-content;
-  padding: 0.28rem 0.65rem;
-  border-radius: 999px;
-  font-size: 0.68rem;
-  font-weight: 700;
-  letter-spacing: 0.35px;
-  text-transform: uppercase;
-  border: 1px solid transparent;
 }
 
-.protection-chip.success {
-  color: var(--color-success);
-  background: var(--color-success-bg);
-  border-color: var(--color-success-border);
+.password-toggle-btn:hover {
+  color: var(--color-slate-600);
 }
 
-.protection-chip.warning {
-  color: var(--color-warning);
-  background: var(--color-warning-bg);
-  border-color: var(--color-warning-border);
+.password-toggle-btn svg {
+  display: block;
 }
 
-.protection-chip.danger {
-  color: var(--color-danger);
-  background: var(--color-danger-bg);
-  border-color: var(--color-danger-border);
+.auth-footer {
+  text-align: center;
+  margin-top: 1.5rem;
+  margin-bottom: 0;
+  font-size: 0.85rem;
+  color: var(--color-slate-500);
 }
 
-.protection-chip.info {
+.auth-footer a {
   color: var(--color-primary);
-  background: var(--color-info-bg);
-  border-color: var(--color-info-border);
+  text-decoration: none;
+  font-weight: 600;
+  transition: color var(--transition-fast);
 }
 
-.protection-chip-note {
-  color: var(--color-slate-500);
-  font-size: 0.76rem;
-  line-height: 1.45;
+.auth-footer a:hover {
+  color: var(--color-primary-dark);
+  text-decoration: underline;
 }
 
-/* ── Small button variant ──────────────────────────────────────── */
-.btn-sm {
-  padding: 0.3rem 0.75rem;
-  font-size: 0.76rem;
+/* ============================================================
+   PREDICTION ROW HIGHLIGHTING
+   Left-border accent instead of full background fill.
+   Pre-attentive spatial cue without color-flooding the row.
+   ============================================================ */
+.row-danger {
+  box-shadow: inset 3px 0 0 var(--color-danger);
 }
 
-/* ── Expandable detail panel ───────────────────────────────────── */
-.tx-detail-row td {
-  padding: 0 !important;
-  border-bottom: 2px solid var(--color-slate-200);
+.row-warning {
+  box-shadow: inset 3px 0 0 var(--color-warning);
 }
 
-.tx-detail-panel {
-  padding: 1.25rem 1.5rem;
-  background: var(--color-slate-50);
-  border-top: 1px solid var(--color-slate-200);
-}
-
-.tx-detail-callout-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.85rem;
-  margin-bottom: 1rem;
-}
-
-.tx-detail-callout {
-  border: 1px solid var(--color-slate-200);
-  border-radius: var(--radius-md);
-  background: var(--color-white);
-  padding: 0.9rem;
-}
-
-.tx-detail-callout.info {
-  border-color: var(--color-info-border);
-  background: #f8fbff;
-}
-
-.tx-detail-block-banner {
-  margin-bottom: 1rem;
-}
-
-/* ── Detail grid — key facts at a glance ───────────────────────── */
-.tx-detail-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 0.85rem;
-  margin-bottom: 1rem;
-}
-
-.tx-detail-item {
-  display: flex;
+/* ============================================================
+   NAVBAR HAMBURGER  (hidden on desktop, shown on mobile)
+   ============================================================ */
+.navbar-hamburger {
+  display: none;
   flex-direction: column;
-  gap: 0.25rem;
-}
-
-.tx-detail-label {
-  font-size: 0.7rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--color-slate-400);
-}
-
-.tx-detail-value {
-  font-size: 0.86rem;
-  color: var(--color-navy-mid);
-  font-weight: 500;
-}
-
-/* ── Detail sections (block reason, explanation, action) ────────── */
-.tx-detail-section {
-  margin-top: 0.75rem;
-  padding-top: 0.75rem;
-  border-top: 1px solid var(--color-slate-200);
-}
-
-.tx-detail-text {
-  font-size: 0.86rem;
-  line-height: 1.6;
-  color: var(--color-slate-700);
-  margin: 0.3rem 0 0;
-  padding: 0.6rem 0.9rem;
-  background: var(--color-white);
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--color-slate-200);
-}
-
-.tx-detail-text-danger {
-  border-left: 3px solid var(--color-danger);
-  background: var(--color-danger-bg);
-}
-
-.tx-detail-text-info {
-  border-left: 3px solid var(--color-primary);
-  background: var(--color-info-bg);
-}
-
-.alerts-list {
-  display: grid;
-  gap: 1rem;
-}
-
-.alert-detail-card {
-  background: var(--color-white);
-  border: 1px solid var(--color-slate-200);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
-  padding: 1.35rem 1.45rem;
-}
-
-.alert-detail-card.high {
-  border-left: 4px solid var(--color-danger);
-}
-
-.alert-detail-card.medium {
-  border-left: 4px solid var(--color-warning);
-}
-
-.alert-detail-card.low,
-.alert-detail-card.resolved {
-  border-left: 4px solid var(--color-primary);
-}
-
-.alert-detail-header {
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 1rem;
-}
-
-.alert-detail-badges {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-bottom: 0.6rem;
-}
-
-.alert-detail-header h2 {
-  color: var(--color-navy);
-  font-size: 1rem;
-  margin-bottom: 0.25rem;
-}
-
-.alert-detail-header p {
-  color: var(--color-slate-500);
-  font-size: 0.86rem;
-  line-height: 1.55;
-}
-
-.alert-detail-score {
-  min-width: 110px;
-  text-align: right;
-}
-
-.alert-detail-score span {
-  display: block;
-  color: var(--color-slate-400);
-  font-size: 0.72rem;
-  text-transform: uppercase;
-  letter-spacing: 0.45px;
-  margin-bottom: 0.2rem;
-}
-
-.alert-detail-score strong {
-  font-size: 1.4rem;
-  line-height: 1;
-}
-
-.alert-detail-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.85rem;
-}
-
-.alert-detail-item {
-  background: var(--color-slate-50);
-  border: 1px solid var(--color-slate-200);
-  border-radius: var(--radius-md);
-  padding: 0.9rem;
-}
-
-.alert-detail-item p {
-  color: var(--color-slate-700);
-  font-size: 0.84rem;
-  line-height: 1.55;
-  margin-top: 0.3rem;
-}
-
-/* ============================
-   TRANSACTION CARD LIST
-   Card-based layout for the Transactions page,
-   matching the style of Dashboard & Fraud Alerts.
-   ============================ */
-.tx-card-list {
-  display: grid;
-  gap: 1rem;
-}
-
-.tx-card {
-  background: var(--color-white);
-  border: 1px solid var(--color-slate-200);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
-  padding: 1.35rem 1.45rem;
-  transition: box-shadow var(--transition-normal);
-}
-
-.tx-card:hover {
-  box-shadow: var(--shadow-md);
-}
-
-.tx-card.danger {
-  border-left: 4px solid var(--color-danger);
-}
-
-.tx-card.warning {
-  border-left: 4px solid var(--color-warning);
-}
-
-.tx-card.info {
-  border-left: 4px solid var(--color-primary);
-}
-
-.tx-card.success {
-  border-left: 4px solid var(--color-success);
-}
-
-.tx-card-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 1rem;
-  margin-bottom: 0.75rem;
-}
-
-.tx-card-badges {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.45rem;
+  justify-content: center;
   align-items: center;
-}
-
-.tx-card-amount {
-  text-align: right;
-  min-width: 120px;
+  gap: 4px;
+  width: 36px;
+  height: 36px;
+  margin-right: 0.75rem;
+  padding: 0.3rem;
+  background: none;
+  border: none;
+  cursor: pointer;
   flex-shrink: 0;
+  border-radius: var(--radius-sm);
+  transition: background var(--transition-fast);
 }
-
-.tx-card-amount-label {
+.navbar-hamburger:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+.navbar-hamburger span {
   display: block;
-  font-size: 0.7rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--color-slate-400);
-  margin-bottom: 0.15rem;
+  width: 20px;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.82);
+  border-radius: 2px;
+  transition: opacity var(--transition-fast);
 }
 
-.tx-card-amount strong {
-  font-size: 1.15rem;
-  color: var(--color-navy);
-}
-
-.tx-card-summary {
-  margin-bottom: 0.85rem;
-}
-
-.tx-card-note {
-  font-size: 0.86rem;
-  color: var(--color-slate-500);
-  line-height: 1.55;
-  margin: 0;
-}
-
-.tx-card-meta {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-  gap: 0.65rem;
-  padding: 0.85rem 0;
-  border-top: 1px solid var(--color-slate-200);
-  border-bottom: 1px solid var(--color-slate-200);
-}
-
-.tx-card-meta-item {
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-}
-
-.tx-card-actions {
-  padding-top: 0.85rem;
-}
-
-.tx-card-details {
-  margin-top: 1rem;
-  padding-top: 1rem;
-  border-top: 1px solid var(--color-slate-200);
-}
-
-/* ============================
+/* ============================================================
    RESPONSIVE DESIGN
-   ============================ */
-@media (max-width: 1024px) {
-  .summary-grid {
-    grid-template-columns: repeat(2, 1fr);
+   ============================================================ */
+
+/* ── Compact laptop / large tablet (sidebar still visible) ───────────────
+   Key problems solved:
+   - sidebar-width shrinks 272px→232px, freeing 40px of content width
+   - table-container gets overflow-x:auto so wide tables scroll instead of
+     clipping; sticky-th is disabled here to avoid overflow-x sticky context bug
+   - page-content padding loosens from the default 2.75rem to 1.75rem
+   - data-table cell padding tightens slightly to buy another column of space
+   ──────────────────────────────────────────────────────────────────────── */
+@media (max-width: 1100px) {
+  :root {
+    --sidebar-width: 232px;
   }
 
-  .customer-insight-grid,
-  .tx-detail-callout-grid,
-  .alert-detail-grid,
-  .dashboard-section-grid {
-    grid-template-columns: 1fr;
+  .table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Disable sticky headers inside overflow-x scroll containers.
+     position:sticky loses its viewport reference inside overflow-x:auto in
+     Safari — the header snaps to wrong positions or ghosts. Static is safe. */
+  .table-container .data-table th {
+    position: static;
+  }
+
+  .page-content {
+    padding: 1.5rem 1.75rem 2.5rem;
+  }
+
+  .data-table th,
+  .data-table td {
+    padding: 0.75rem 0.9rem;
   }
 }
 
 @media (max-width: 768px) {
+  /* Sidebar becomes an off-screen drawer */
   .sidebar {
-    width: 220px;
+    position: fixed;
+    top: var(--navbar-height);
+    left: calc(-1 * var(--sidebar-width));
+    width: var(--sidebar-width) !important;   /* override --collapsed on mobile */
+    z-index: 150;
+    height: calc(100vh - var(--navbar-height));
+    transition: left 0.25s var(--ease-out);
+    box-shadow: var(--shadow-lg);
+  }
+
+  /* Slide in when open */
+  .sidebar--mobile-open {
+    left: 0;
+  }
+
+  /* Show labels (collapsed classes ignored inside mobile drawer) */
+  .sidebar--collapsed .sidebar-link .label {
+    display: block;
+  }
+  .sidebar--collapsed .sidebar-link {
+    justify-content: flex-start;
+    padding: 0.72rem 1.1rem;
+    gap: 0.75rem;
+    margin: 2px 0.9rem;
+    min-height: auto;
+    border-radius: var(--radius-sm);
+  }
+  .sidebar--collapsed .sidebar-header {
+    justify-content: flex-start;
+    padding: 1.5rem 1.5rem 1.1rem;
+  }
+  .sidebar--collapsed .sidebar-divider span {
+    display: block;
+  }
+  .sidebar--collapsed .sidebar-divider::after {
+    flex: 1;
+    width: unset;
+  }
+  /* Restore expanded-mode active style inside the mobile drawer */
+  .sidebar--collapsed .sidebar-link.active {
+    background: var(--color-primary-50);
+    border-color: var(--color-primary-light);
+    box-shadow: inset 3px 0 0 var(--color-primary);
+    color: var(--color-primary);
+  }
+  /* Suppress the CSS tooltip on touch/mobile */
+  .sidebar--collapsed .sidebar-link::after {
+    display: none;
+  }
+
+  /* Backdrop — shown when drawer is open */
+  .sidebar-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.38);
+    z-index: 149;
+  }
+
+  /* Hamburger button visible on mobile */
+  .navbar-hamburger {
+    display: flex;
   }
 
   .page-content {
-    padding: 1.25rem;
+    padding: 1.25rem 1.25rem 2rem;
   }
 
-  .summary-grid {
-    grid-template-columns: 1fr 1fr;
-  }
-
-  .navbar-title {
-    font-size: 1rem;
+  .navbar {
+    padding: 0 1rem;
   }
 
   .navbar-subtitle {
     display: none;
   }
 
-  .navbar-user {
+  /* Remove the T-intersection brand anchor — sidebar is a full-screen
+     drawer at this breakpoint, not a visible column alongside the navbar.
+     Without this reset, the 240px min-width squeezes logout/status off-screen
+     on 375px phones. */
+  .navbar-brand {
+    min-width: 0;
+    padding-right: 0;
+    border-right: none;
+    margin-right: 0;
+  }
+
+  /* Status chip takes ~110px on a 375px screen — hide it on mobile.
+     The green dot is redundant on a phone where the user is actively using the app. */
+  .navbar-status {
     display: none;
   }
 
-  .alert-header {
+  /* Ensure table-container always scrolls at mobile widths.
+     Scroll shadow: CSS background trick shows fade at right edge,
+     giving a visual hint that more columns exist off-screen.     */
+  .table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    background:
+      linear-gradient(to right,  var(--color-white) 20%, transparent),
+      linear-gradient(to left,   var(--color-white) 20%, transparent) right,
+      radial-gradient(farthest-side at left,  rgba(0,0,0,.10), transparent),
+      radial-gradient(farthest-side at right, rgba(0,0,0,.10), transparent) right;
+    background-repeat: no-repeat;
+    background-size: 40px 100%, 40px 100%, 14px 100%, 14px 100%;
+    background-attachment: local, local, scroll, scroll;
+    border-radius: var(--radius-lg);
+  }
+
+  .form-row {
     flex-direction: column;
-    align-items: flex-start;
-    gap: 0.5rem;
+    gap: 0;
   }
 
-  .form-container {
-    padding: 1.5rem;
+  .auth-card {
+    padding: 2rem 1.5rem 1.75rem;
+    margin: 0 0.5rem;
   }
 
-  .customer-insight-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .alert-detail-header,
-  .protection-activity-topline {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .alert-detail-score {
-    text-align: left;
+  .data-table th,
+  .data-table td {
+    padding: 0.55rem 0.65rem;
+    font-size: 0.78rem;
   }
 }
 
 @media (max-width: 480px) {
-  .sidebar {
-    width: 100%;
-    position: static;
-    min-height: auto;
-    height: auto;
-    border-right: none;
-    border-bottom: 1px solid var(--color-slate-200);
-  }
-
-  .main-content {
-    flex-direction: column;
-  }
-
-  .summary-grid {
-    grid-template-columns: 1fr;
-  }
+  /* summary-grid: auto-fill with minmax(200px,1fr) already collapses to 1-col
+     at 480px — no manual override needed. */
 
   .page-content {
     padding: 1rem;
   }
+
+  .table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* form-card inner horizontal padding reduced — card at 16+16 page
+     padding leaves ~343px on a 375px phone; 2rem (32px) card padding was
+     leaving only ~279px for inputs. 1.25rem gives ~313px. */
+  .form-card {
+    padding: 1.25rem 1.25rem;
+  }
+
+  /* result-card (verdict) — same breathing-room fix */
+  .result-card {
+    padding: 1.25rem 1.25rem;
+  }
+
+  /* insight-row: 3 items × 120px min-width = 360px > ~345px available.
+     Hide vertical dividers and let items wrap in a natural 2-col grid. */
+  .insight-divider {
+    display: none;
+  }
+  .insight-item {
+    min-width: calc(50% - 0.5rem);
+    padding: 0;
+  }
+  .insight-row {
+    gap: 0.75rem;
+  }
+  /* Centre the third orphan item (e.g. 'Needs attention') in a 2-col row */
+  .insight-item:last-child:nth-child(5) {
+    width: 100%;
+    align-items: center;
+  }
+
+  /* btn-row: stack buttons full-width on phones */
+  .btn-row {
+    flex-direction: column;
+  }
+  .btn-row .btn,
+  .btn-row .btn-primary,
+  .btn-row .btn-outline {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* ── iOS Safari auto-zoom prevention ───────────────────────────────
+   iOS Safari zoom-on-focus fires when input font-size < 16px.
+   Use (hover:none) to target touch-only devices (phones/tablets)
+   without changing desktop input size (which stays at 0.87rem).     */
+@media (hover: none) {
+  .form-group input,
+  .form-group select,
+  .form-textarea,
+  .auth-card .form-group input,
+  .review-form .form-group select,
+  .review-form .form-group textarea {
+    font-size: 1rem;   /* 16px — iOS Safari auto-zoom threshold */
+  }
+
+  /* btn-view: 0.3rem padding renders at ~24px on touch — below 44px touch target.
+     Critical: this is the primary row action in History and Review Queue. */
+  .btn-view {
+    min-height: 44px;
+    padding: 0.6rem 0.9rem;
+    font-size: 0.82rem;
+  }
+}
+
+/* ============================================================
+   TAB SWITCHER (Check Message page)
+   ============================================================ */
+.tab-switcher {
+  display: flex;
+  gap: 0;
+  background: var(--color-white);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 1px solid var(--color-slate-200);
+  box-shadow: var(--shadow-xs);
+  width: fit-content;
+}
+
+/* Tab switcher fills full width at tablet — looks detached at 640–1100px
+   when sidebar is still visible and content area is ~600–800px wide.   */
+@media (max-width: 1100px) and (min-width: 481px) {
+  .tab-switcher {
+    width: 100%;
+  }
+  .tab-btn {
+    flex: 1;
+    text-align: center;
+  }
+}
+
+.tab-btn {
+  padding: 0.65rem 1.75rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  background: var(--color-white);
+  color: var(--color-slate-500);
+  transition: all var(--transition-fast);
+  letter-spacing: 0.05px;
+}
+
+.tab-btn:hover {
+  background: var(--color-slate-50);
+  color: var(--color-navy-mid);
+}
+
+.tab-btn.active {
+  background: linear-gradient(135deg, #2d6fd4 0%, #2256b5 100%);
+  color: var(--color-white);
+  font-weight: 700;
+  letter-spacing: -0.1px;
+}
+
+/* ============================================================
+   FORM TEXTAREA
+   ============================================================ */
+.form-textarea {
+  width: 100%;
+  padding: 0.7rem 0.85rem;
+  border: 1.5px solid var(--color-slate-300);
+  border-radius: var(--radius-sm);
+  font-size: 0.87rem;
+  color: var(--color-navy-mid);
+  background: var(--color-white);
+  font-family: inherit;
+  line-height: 1.6;
+  resize: vertical;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.form-textarea:hover {
+  border-color: var(--color-slate-400);
+}
+
+.form-textarea:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18);
+}
+.form-textarea:focus:not(:focus-visible) {
+  outline: none;
+}
+
+.form-textarea::placeholder {
+  color: var(--color-slate-400);
+  font-size: 0.82rem;
+}
+
+.form-hint {
+  display: block;
+  margin-top: 0.3rem;
+  /* 0.75rem = 12px — WCAG 1.4.4 minimum for helper/hint text */
+  font-size: 0.75rem;
+  /* WCAG 1.4.3: slate-500 (#64748b) — 4.77:1 on white, passes AA */
+  color: var(--color-slate-500);
+  text-align: right;
+}
+
+/* ============================================================
+   FILE UPLOAD AREA
+   ============================================================ */
+.file-upload-area input[type="file"] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  overflow: hidden;
+}
+
+.file-upload-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 1.25rem 1.5rem;
+  background: var(--color-slate-50);
+  border: 2px dashed var(--color-slate-300);
+  border-radius: var(--radius-md);
+  color: var(--color-slate-500);
+  font-size: 0.87rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.file-upload-label:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  background: var(--color-primary-50);
+}
+
+/* ============================================================
+   RESULT CARD — Verdict-themed container
+   ============================================================ */
+.result-card {
+  background: var(--color-white);
+  padding: 1.75rem 2rem;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--color-slate-200);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Verdict top accent bar — solid single colour, no gradient flash */
+.result-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;               /* reduced from 4px — subtler signal */
+  background: var(--color-slate-300);
+}
+
+.result-card.verdict-genuine::before    { background: #1a7f5a; }  /* forest green */
+.result-card.verdict-suspicious::before { background: #b45309; }  /* warm amber */
+.result-card.verdict-fraudulent::before { background: #c53030; }  /* muted crimson */
+.result-card.verdict-unknown::before    { background: #64748b; }  /* neutral slate */
+.result-card.verdict-info::before       { background: #3b82f6; }  /* info blue */
+
+/* Subtle bg tint per verdict — reduced opacity for less visual competition */
+.result-card.verdict-genuine    { background: linear-gradient(180deg, #f2fbf7 0%, var(--color-white) 25%); }
+.result-card.verdict-suspicious { background: linear-gradient(180deg, #fefbf0 0%, var(--color-white) 25%); }
+.result-card.verdict-fraudulent { background: linear-gradient(180deg, #fef8f8 0%, var(--color-white) 25%); }
+.result-card.verdict-info       { background: linear-gradient(180deg, #eff6ff 0%, var(--color-white) 25%); }
+
+/* ============================================================
+   VERDICT BANNER (big icon + label + score)
+   ============================================================ */
+.verdict-banner {
+  display: flex;
+  align-items: center;
+  gap: 1.15rem;
+  margin-bottom: 1rem;
+  padding-top: 0.5rem;
+}
+
+.verdict-icon {
+  font-size: 2.4rem;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.verdict-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.verdict-text .status-pill {
+  font-size: 0.72rem;
+}
+
+.verdict-headline {
+  margin: 0.35rem 0 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--color-navy);
+  line-height: 1.4;
+  letter-spacing: -0.15px;
+}
+
+.verdict-score {
+  text-align: center;
+  flex-shrink: 0;
+  padding: 0.65rem 1.15rem;
+  background: var(--color-slate-50);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-slate-200);
+  min-width: 82px;
+}
+
+.verdict-pct {
+  display: block;
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: var(--color-navy);
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.verdict-sub {
+  display: block;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  /* slate-500 (#64748b): 4.77:1 on white/slate-50 — passes AA */
+  color: var(--color-slate-500);
+  font-weight: 600;
+}
+
+.result-footer {
+  margin-top: 1.5rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--color-slate-100);
+  font-size: 0.74rem;
+  color: var(--color-slate-400);
+  letter-spacing: 0.2px;
+}
+
+/* ============================================================
+   CONFIDENCE BAR
+   ============================================================ */
+.confidence-track {
+  width: 100%;
+  height: 7px;
+  background: var(--color-slate-200);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.confidence-fill {
+  height: 100%;
+  border-radius: var(--radius-full);
+  transition: width 0.6s var(--ease-out);
+}
+
+/* ============================================================
+   RISK GRID (4-column risk scores)
+   ============================================================ */
+.risk-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+.risk-item {
+  background: var(--color-slate-50);
+  padding: 0.9rem 1rem;
+  border-radius: var(--radius-md);
+  text-align: center;
+  border: 1px solid var(--color-slate-200);
+  transition: border-color var(--transition-fast), transform var(--transition-fast);
+}
+
+.risk-item:hover {
+  transform: translateY(-1px);
+}
+
+.risk-item.risk-low  { border-color: var(--color-success-border); background: var(--color-success-bg); }
+.risk-item.risk-med  { border-color: var(--color-warning-border); background: var(--color-warning-bg); }
+.risk-item.risk-high { border-color: var(--color-danger-border);  background: var(--color-danger-bg); }
+
+.risk-item.risk-low  .risk-value { color: var(--color-success); }
+.risk-item.risk-med  .risk-value { color: var(--color-warning); }
+.risk-item.risk-high .risk-value { color: var(--color-danger); }
+
+.risk-label {
+  display: block;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--color-slate-500);
+  font-weight: 600;
+  margin-bottom: 0.35rem;
+}
+
+.risk-value {
+  display: block;
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--color-navy);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ============================================================
+   EXTRACTED FIELDS GRID
+   ============================================================ */
+.extracted-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+}
+
+.extracted-grid.detail-grid {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.extracted-item {
+  background: var(--color-slate-50);
+  padding: 0.75rem 0.95rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-slate-200);
+  transition: border-color var(--transition-fast);
+}
+
+.extracted-item:hover {
+  border-color: var(--color-slate-300);
+}
+
+.extracted-label {
+  display: block;
+  font-size: 0.67rem;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--color-slate-400);
+  font-weight: 600;
+  margin-bottom: 0.2rem;
+}
+
+.extracted-value {
+  display: block;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--color-navy);
+  word-break: break-all;
+}
+
+.extracted-value.mono {
+  font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+  font-size: 0.82rem;
+  letter-spacing: 0.3px;
+}
+
+.extracted-value.amount {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--color-primary-dark);
+}
+
+/* ============================================================
+   RAW TEXT BLOCK (pre-formatted SMS display)
+   ============================================================ */
+.raw-text-block {
+  background: var(--color-slate-50);
+  border: 1px solid var(--color-slate-200);
+  border-radius: var(--radius-md);
+  padding: 0.9rem 1.1rem;
+  font-size: 0.84rem;
+  color: var(--color-slate-700);
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 1.65;
+  font-family: inherit;
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+/* ============================================================
+   BACK LINK
+   ============================================================ */
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.84rem;
+  color: var(--color-primary);
+  font-weight: 600;
+  text-decoration: none;
+  transition: color var(--transition-fast), gap var(--transition-fast);
+  margin-bottom: 1.25rem;
+  /* 44px touch target — primary back-nav on detail pages */
+  min-height: 44px;
+  padding: 0.5rem 0;
+}
+
+.back-link:hover {
+  color: var(--color-primary-dark);
+  gap: 0.45rem;
+}
+
+/* ============================================================
+   ML BADGE (Phase 10.4 — extracted from inline styles)
+   ============================================================ */
+.ml-badge {
+  margin-top: 1.25rem;
+  padding: 0.7rem 1.1rem;
+  border-radius: var(--radius-md);
+  font-size: 0.84rem;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  line-height: 1.5;
+}
+
+.ml-badge.ml-agrees {
+  background: var(--color-slate-50);
+  border: 1px solid var(--color-slate-200);
+}
+
+.ml-badge.ml-differs {
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+}
+
+.ml-badge strong {
+  margin-right: 0.2rem;
+}
+
+.ml-badge .ml-conf {
+  opacity: 0.65;
+  margin-left: 0.25rem;
+  font-size: 0.82rem;
+}
+
+.ml-badge .ml-status {
+  margin-left: 0.35rem;
+  font-weight: 600;
+}
+
+/* ============================================================
+   SOURCE / OCR INLINE BADGES (Phase 10.4)
+   ============================================================ */
+.source-chip {
+  display: inline-block;
+  margin-bottom: 0.75rem;
+  padding: 0.2rem 0.65rem;
+  border-radius: var(--radius-full);
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: var(--color-slate-100);
+  color: var(--color-slate-600);
+}
+
+.ocr-conf-pill {
+  display: inline-block;
+  padding: 0.15rem 0.55rem;
+  border-radius: var(--radius-full);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #fff;
+}
+
+.ocr-conf-pill.ocr-high   { background: var(--color-success); }
+.ocr-conf-pill.ocr-medium { background: var(--color-warning); }
+.ocr-conf-pill.ocr-low    { background: var(--color-danger); }
+
+.ocr-momo-chip {
+  display: inline-block;
+  padding: 0.15rem 0.55rem;
+  border-radius: var(--radius-full);
+  font-size: 0.7rem;
+  font-weight: 600;
+  background: var(--color-slate-100);
+  color: var(--color-success);
+}
+
+/* ============================================================
+   REVIEW FORM (Phase 10.4 — replaces inline styles)
+   ============================================================ */
+.review-form .form-group select,
+.review-form .form-group textarea {
+  width: 100%;
+  padding: 0.6rem 0.85rem;
+  border: 1.5px solid var(--color-slate-300);
+  border-radius: var(--radius-sm);
+  font-size: 0.87rem;
+  color: var(--color-navy-mid);
+  background: var(--color-white);
+  font-family: inherit;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.review-form .form-group textarea {
+  resize: vertical;
+  line-height: 1.6;
+}
+
+.review-form .form-group select:focus,
+.review-form .form-group textarea:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18);
+}
+.review-form .form-group select:focus:not(:focus-visible),
+.review-form .form-group textarea:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* ============================================================
+   SUMMARY CARD ICONS (Phase 10.4 — stat strip enhancements)
+   ============================================================ */
+.summary-card .card-icon-inline {
+  font-size: 1.2rem;
+  margin-bottom: 0.3rem;
+  display: block;
+}
+
+/* ============================================================
+   TAB SWITCHER SPACING
+   ============================================================ */
+.tab-switcher {
+  margin-bottom: 1.25rem;
+}
+
+/* Check-message page tab: pull guidance panel closer below tabs */
+.check-tab-switcher {
+  margin-bottom: 0.5rem;
+}
+
+/* ============================================================
+   CHECK MESSAGE PAGE — guidance panel, form, button footer
+   ============================================================ */
+
+/* How-to panel: icon-led items, no raw bullets */
+.check-guidance-strip {
+  background: var(--color-slate-50);
+  border: 1px solid var(--color-slate-200);
+  border-radius: var(--radius-md);
+  padding: 0.65rem 1rem 0.65rem 1rem;
+  /* No bottom margin — page-body gap (1.5rem) handles section spacing.
+     The strip should feel attached to the tab switcher above it. */
+}
+
+.check-guidance-label {
+  display: block;
+  font-size: 0.67rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.9px;
+  color: var(--color-slate-400);
+  margin-bottom: 0.45rem;
+}
+
+.check-guidance-items {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.check-guidance-item {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--color-slate-600);
+  line-height: 1.55;
+}
+
+.check-guidance-icon {
+  flex-shrink: 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  width: 14px;
+  text-align: center;
+  margin-top: 1px;
+}
+
+.check-guidance-item strong {
+  color: var(--color-navy);
+  font-weight: 650;
+}
+
+/* Form card: remove inherited bottom margin */
+.check-form-card {
+  margin-bottom: 0;
+  padding-bottom: 0;   /* footer row provides its own padding */
+}
+
+/* Verify button: auto-width on desktop, contained */
+.check-verify-btn {
+  width: auto !important;
+  min-width: 180px;
+  padding: 0.62rem 1.75rem;
+  font-size: 0.875rem;
+  min-height: 42px;
+  white-space: nowrap;
+}
+
+/* Footer strip: top-border band that anchors the button inside the card */
+.check-submit-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 0.75rem -2rem -1.75rem;   /* bleed into form-card padding edges */
+  padding: 0.85rem 2rem;
+  border-top: 1px solid var(--color-slate-100);
+  background: var(--color-slate-50);
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+}
+
+.check-submit-note {
+  font-size: 0.74rem;
+  color: var(--color-slate-400);
+  font-style: italic;
+  flex: 1;
+}
+
+/* On mobile: stack note above button, button spans full width */
+@media (max-width: 600px) {
+  .check-verify-btn {
+    width: 100% !important;
+    min-width: unset;
+  }
+  .check-submit-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+    /* Re-bleed for reduced card padding on mobile (1.25rem sides) */
+    margin: 0.75rem -1.25rem -1.25rem;
+    padding: 0.75rem 1.25rem;
+  }
+  .check-submit-note {
+    text-align: center;
+  }
+}
+
+/* Dark mode: guidance panel */
+[data-theme="dark"] .check-guidance-strip {
+  background: var(--color-slate-50);
+  border-color: var(--color-slate-200);
+}
+
+[data-theme="dark"] .check-guidance-item strong {
+  color: var(--color-navy);
+}
+
+[data-theme="dark"] .check-submit-row {
+  background: var(--color-slate-50);
+  border-top-color: var(--color-slate-200);
+}
+
+/* ============================================================
+   VIEW BUTTON (Table row action)
+   ============================================================ */
+.btn-view {
+  padding: 0.3rem 0.75rem;
+  font-size: 0.76rem;
+  font-weight: 600;
+  white-space: nowrap;
+  /* Min-width prevents the arrow label from being a tiny hit-area */
+  min-width: 72px;
+  text-align: center;
+}
+
+/* ── OCR result header row (CheckMessage.jsx) ──────────────────────
+   Wraps on narrow widths — prevents overflow at 375px where the
+   inline flex row (title + pills + copy btn) totals ~380px.          */
+.ocr-header-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.5rem;
+}
+.ocr-header-row .ocr-copy-btn {
+  margin-left: auto;
+}
+@media (max-width: 480px) {
+  .ocr-header-row .ocr-copy-btn {
+    margin-left: 0;   /* wraps onto its own row — no hanging right-margin */
+  }
+}
+
+/* ── detail-field-label: parsed fields table in ReviewDetail ───────
+   40% was wrapping long labels at 375px. Narrowed at 480px.          */
+.detail-field-label {
+  width: 40%;
+}
+@media (max-width: 480px) {
+  .detail-field-label {
+    width: 35%;
+    font-size: 0.78rem;
+  }
+}
+
+/* ── Review Queue table column min-widths ──────────────────────────
+   6 columns without anchors collapse to ~70px at tablet widths.      */
+.review-table .col-verdict { min-width: 110px; }
+.review-table .col-date    { min-width: 80px;  }
+.review-table .col-party   { min-width: 120px; }
+.review-table .col-amount  { min-width: 85px;  }
+.review-table .col-status  { min-width: 80px;  }
+.review-table .col-action  { min-width: 80px;  }
+
+/* ── <details> summary touch target ────────────────────────────────
+   Native summary elements render at ~20px; 44px needed for touch.    */
+details > summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+}
+
+/* ============================================================
+   TABLE DATE CELL
+   ============================================================ */
+.date-sub {
+  display: block;
+  font-size: 0.72rem;
+  color: var(--color-slate-400);
+  margin-top: 1px;
+}
+
+/* ============================================================
+   TABLE CONFIDENCE CELL
+   ============================================================ */
+.conf-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.conf-cell .confidence-track {
+  width: 60px;
+  height: 6px;
+}
+
+.conf-pct {
+  font-size: 0.78rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  min-width: 32px;
+}
+
+/* ============================================================
+   RESPONSIVE — Phase 6 components
+   ============================================================ */
+
+/* extracted-grid: drop to 2-col at 950px (not 1024px).
+   At 769–1024px with 232px sidebar, 3 cols = 163px each — mono transaction
+   IDs like MTNMOMOGHA-20260330-0012345 were wrapping and looking broken. */
+@media (max-width: 950px) {
+  .extracted-grid,
+  .extracted-grid.detail-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* risk-grid: drop to 2-col at 900px before the sidebar disappears.
+   At 769–900px with 232px sidebar, 4 cols = ~122px each — too narrow for
+   the risk label + percentage value at these font sizes. */
+@media (max-width: 900px) {
+  .risk-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  /* risk-grid was already added at 900px above; 768px keeps 2-col */
+
+  .verdict-banner {
+    flex-wrap: wrap;
+  }
+
+  .verdict-score {
+    width: 100%;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .verdict-pct { font-size: 1.25rem; }
+}
+
+@media (max-width: 480px) {
+  .extracted-grid,
+  .extracted-grid.detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .risk-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .tab-switcher {
+    width: 100%;
+  }
+
+  .tab-btn {
+    flex: 1;
+    text-align: center;
+  }
+
+  /* filter-pills flex-wrap is now set on the base rule — keep the 480px
+     block only as a hook for future pill size adjustments if needed */
+  .filter-pill {
+    font-size: 0.78rem;
+  }
+}
+
+/* ============================================================
+   Phase F1 — Fintech UX additions
+   ============================================================ */
+
+/* ── Verdict action guidance ─────────────────────────────── */
+.verdict-guidance {
+  margin-top: 1rem;
+  padding: 0.85rem 1rem;
+  border-radius: var(--radius-md, 8px);
+  background: var(--color-slate-50, #f8fafc);
+  border-left: 3px solid var(--color-slate-300, #cbd5e1);
+  font-size: 0.88rem;
+  line-height: 1.55;
+  color: var(--color-slate-700, #334155);
+}
+
+.verdict-genuine .verdict-guidance {
+  background: rgba(34, 197, 94, 0.06);
+  border-left-color: var(--color-success);
+}
+.verdict-suspicious .verdict-guidance {
+  background: rgba(245, 158, 11, 0.06);
+  border-left-color: var(--color-warning);
+}
+.verdict-fraudulent .verdict-guidance {
+  background: rgba(239, 68, 68, 0.06);
+  border-left-color: var(--color-danger);
+}
+
+/* ── Key concern callout (suspicious / fraud results) ────── */
+.key-concern {
+  font-size: 0.85rem;
+  font-weight: 500;
+  line-height: 1.45;
+  color: var(--color-slate-700, #334155);
+  background: rgba(245, 158, 11, 0.06);
+  border-left: 3px solid var(--color-warning, #f59e0b);
+  border-radius: var(--radius-sm, 4px);
+  padding: 0.5rem 0.75rem;
+}
+.verdict-fraudulent .key-concern {
+  background: rgba(239, 68, 68, 0.06);
+  border-left-color: var(--color-danger, #ef4444);
+}
+
+/* ── Risk score detail (percentage after label) ──────────── */
+.risk-detail {
+  font-size: 0.75rem;
+  color: var(--color-slate-400, #94a3b8);
+  margin-left: 0.35rem;
+  font-weight: 400;
+}
+
+/* ── Priority flag (review queue) ────────────────────────── */
+.priority-flag {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--color-danger, #ef4444);
+  margin-left: 0.5rem;
+  vertical-align: middle;
+}
+
+/* ── Outline button variant ──────────────────────────────── */
+.btn-outline {
+  background: transparent;
+  color: var(--color-primary, #3b82f6);
+  border: 1.5px solid var(--color-primary, #3b82f6);
+  border-radius: var(--radius-md, 8px);
+  padding: 0.5rem 1.15rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  /* Ensure 44px min-height for touch targets */
+  min-height: 44px;
+  transition: background 0.15s, color 0.15s;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.btn-outline:hover {
+  background: var(--color-primary, #3b82f6);
+  color: #fff;
+}
+
+/* ── Tech details (collapsed ML badge) ───────────────────── */
+.tech-details {
+  margin-top: 0.75rem;
+}
+.tech-details summary {
+  font-size: 0.8rem;
+  color: var(--color-slate-400, #94a3b8);
+  cursor: pointer;
+  user-select: none;
+  min-height: 36px;    /* touch target - override the global details>summary 44px for this small item */
+}
+.tech-details summary:hover {
+  color: var(--color-slate-600, #475569);
+}
+
+/* ── Detail page spacing: tighten risk-breakdown / tech-details gap ── */
+.detail-subsection-title {
+  margin-top: 0.85rem !important;
+  margin-bottom: 0.4rem;
+}
+
+.detail-risk-grid {
+  margin-top: 0;
+}
+
+/* ── Review decision card — admin workflow visual anchor ─────
+   Elevates the decision form so the admin's eye lands here
+   immediately after scanning the evidence above it.           */
+.review-form {
+  border-left: 3px solid var(--color-primary);
+}
+
+/* Post-save next-action strip — draws attention after a
+   successful review submission so admins move to the next
+   item without having to scroll or re-orient.               */
+.review-next-bar {
+  background: var(--color-success-bg);
+  border: 1px solid var(--color-success-border);
+  border-radius: var(--radius-lg);
+  padding: 1rem 1.5rem;
+  margin-top: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.review-next-bar p {
+  flex: 1;
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--color-success);
+  font-weight: 600;
+}
+
+/* ── Filter pills (message history) ──────────────────────── */
+.filter-pills {
+  display: flex;
+  gap: 0.5rem;
+  /* flex-wrap here (not just at 480px) — prevents overflow at 480–600px */
+  flex-wrap: wrap;
+  margin-bottom: 1.25rem;
+}
+
+.filter-pill {
+  padding: 0.35rem 0.9rem;
+  border-radius: 999px;
+  border: 1.5px solid var(--color-slate-200, #e2e8f0);
+  background: transparent;
+  font-size: 0.8rem;
+  font-weight: 500;
+  /* 36px floor ensures comfortable touch target per WCAG 2.5.5 */
+  min-height: 36px;
+  color: var(--color-slate-500, #64748b);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.filter-pill:hover {
+  border-color: var(--color-primary, #3b82f6);
+  color: var(--color-primary, #3b82f6);
+}
+.filter-pill.active {
+  background: var(--color-primary, #3b82f6);
+  border-color: var(--color-primary, #3b82f6);
+  color: #fff;
+  font-weight: 700;
+}
+
+/* ============================================================
+   DARK THEME — Scoped overrides for hardcoded light-mode colors
+   ============================================================ */
+
+/* Result card verdict tints — layered, calm, not saturated */
+[data-theme="dark"] .result-card.verdict-genuine {
+  background: linear-gradient(180deg, #0d1e18 0%, var(--color-white) 25%);
+}
+[data-theme="dark"] .result-card.verdict-suspicious {
+  background: linear-gradient(180deg, #1a1508 0%, var(--color-white) 25%);
+}
+[data-theme="dark"] .result-card.verdict-fraudulent {
+  background: linear-gradient(180deg, #1a0f0f 0%, var(--color-white) 25%);
+}
+
+/* Verdict accent bar — same muted solids as light mode */
+[data-theme="dark"] .result-card.verdict-genuine::before    { background: #3dab85; }
+[data-theme="dark"] .result-card.verdict-suspicious::before { background: #c07c20; }
+[data-theme="dark"] .result-card.verdict-fraudulent::before { background: #c87070; }
+[data-theme="dark"] .result-card.verdict-info::before       { background: #60a5fa; }
+[data-theme="dark"] .result-card.verdict-info {
+  background: linear-gradient(180deg, #0f172a 0%, var(--color-white) 25%);
+}
+
+/* Prediction row highlighting — left-border accent (same approach, dark-safe) */
+[data-theme="dark"] .row-danger {
+  box-shadow: inset 3px 0 0 var(--color-danger);
+}
+[data-theme="dark"] .row-warning {
+  box-shadow: inset 3px 0 0 var(--color-warning);
+}
+
+/* Message box semantic text colors */
+[data-theme="dark"] .message-box.success { color: #3dab85; }
+[data-theme="dark"] .message-box.warning { color: #c07c20; }
+
+/* Summary card icon tinted backgrounds — softer fills, less saturated */
+[data-theme="dark"] .card-icon-bg.blue  { background: #1a3352; }
+[data-theme="dark"] .card-icon-bg.amber { background: #1a1508; }
+[data-theme="dark"] .card-icon-bg.green { background: #0d1e18; }
+[data-theme="dark"] .card-icon-bg.red   { background: #1a0f0f; }
+
+/* Sidebar active link */
+[data-theme="dark"] .sidebar-link.active {
+  background: rgba(74, 144, 217, 0.14);   /* clearly tinted, not invisible */
+  border-color: rgba(74, 144, 217, 0.30);
+  color: #7ab8e8;                          /* steel blue text — readable    */
+  box-shadow: inset 3px 0 0 #4a90d9;      /* keep the left-edge accent     */
+}
+
+/* Sidebar hover — dark-aware border so hover is visible */
+[data-theme="dark"] .sidebar-link:hover {
+  background-color: rgba(255, 255, 255, 0.04);
+  border-color: var(--color-slate-300);
+  color: var(--color-navy-mid);
+}
+
+/* MENU / ADMIN section header — lifted above token floor for small caps */
+[data-theme="dark"] .sidebar-menu-label {
+  color: #8aa4b8;    /* ~5.4:1 on #172030 — clearly legible at 0.63rem caps */
+}
+
+/* Portal label ("Customer Portal" / "Admin Portal") */
+[data-theme="dark"] .sidebar-portal-label {
+  color: #8ea8bc;    /* ~5.5:1 — secondary to menu label, not invisible    */
+}
+
+/* ADMIN / section divider label + rule */
+[data-theme="dark"] .sidebar-divider {
+  color: #8aa4b8;    /* matches sidebar header for visual consistency       */
+}
+[data-theme="dark"] .sidebar-divider::after {
+  background: var(--color-slate-300);   /* slightly more visible rule line  */
+}
+
+/* Footer area — copyright and theme toggle container */
+[data-theme="dark"] .sidebar-footer {
+  color: var(--color-slate-500);
+  border-top-color: var(--color-slate-200);
+}
+
+/* Sidebar shadow — darker on dark surfaces */
+[data-theme="dark"] .sidebar {
+  box-shadow: 1px 0 0 var(--color-slate-200),
+              4px 0 20px rgba(0, 0, 0, 0.25);
+}
+
+/* Collapsed active pill — steel blue tint, not electric */
+[data-theme="dark"] .sidebar--collapsed .sidebar-link.active {
+  background: rgba(74, 144, 217, 0.16);
+  border-color: rgba(74, 144, 217, 0.35);
+  box-shadow: none;
+  color: #7ab8e8;
+}
+
+/* Collapsed CSS tooltip — dark-card style, near-black background */
+[data-theme="dark"] .sidebar--collapsed .sidebar-link::after {
+  background: #0d1520;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+}
+
+/* Dashboard insight strip */
+[data-theme="dark"] .dashboard-insight {
+  background: var(--color-white);
+  border-color: var(--color-slate-200);
+}
+
+/* Dark mode: table header — lifted to slate-600 equivalent for dark surface */
+[data-theme="dark"] .data-table th {
+  background: linear-gradient(180deg, var(--color-slate-100), var(--color-slate-50));
+  color: var(--color-slate-600);  /* #94a8b8 — 5.6:1 on #172030 card → ✅ AA */
+}
+
+/* Dark mode: form-hint / meta text — same slate-500 token maps to #8298ac
+   which is ~4.9:1 on dark card surface — passes AA normal text */
+[data-theme="dark"] .form-hint,
+[data-theme="dark"] .insight-label,
+[data-theme="dark"] .summary-note,
+[data-theme="dark"] .verdict-sub {
+  color: var(--color-slate-500);  /* #8298ac in dark theme */
+}
+
+/* Urgent review row: fraud verdict + pending status — subtle red-tinted row
+   that pre-attentively signals priority without full-row color floods.    */
+.review-table tr.row-urgent {
+  background-color: rgba(197, 48, 48, 0.04);
+}
+[data-theme="dark"] .review-table tr.row-urgent {
+  background-color: rgba(200, 112, 112, 0.08);
+}
+
+[data-theme="dark"] .insight-divider {
+  background: var(--color-slate-200);
+}
+
+/* Section title divider line */
+[data-theme="dark"] .section-title {
+  border-bottom-color: var(--color-slate-200);
+}
+
+/* Wallet provider chips — dark mode */
+[data-theme="dark"] .wallet-provider-mtn {
+  background: #1a1508;
+  color: #c07c20;
+  border-color: #5a3810;
+}
+
+[data-theme="dark"] .wallet-provider-telecel {
+  background: #1d0a0c;
+  color: #e07070;
+  border-color: #5a1a1a;
+}
+
+[data-theme="dark"] .wallet-provider-airteltigo {
+  background: var(--color-primary-50);
+  color: var(--color-primary-dark);
+  border-color: var(--color-primary-light);
+}
+
+/* wallet-card accent border in dark mode */
+[data-theme="dark"] .wallet-card--primary {
+  border-left-color: var(--color-success);
+}
+
+/* Wallet action panel — dark surface tints */
+[data-theme="dark"] .wallet-card-actions {
+  border-left-color: var(--color-slate-200);
+}
+
+[data-theme="dark"] .wallet-checkbox-row {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: var(--color-slate-200);
+}
+
+/* Wallet count badge — primary tint readable on dark card */
+[data-theme="dark"] .wallets-count {
+  background: rgba(37, 99, 235, 0.15);
+  color: #7ab8e8;
+  border-color: rgba(74, 144, 217, 0.3);
+}
+
+/* Table — calmer header, subtle row separation */
+[data-theme="dark"] .data-table th {
+  background: linear-gradient(180deg, var(--color-slate-100), var(--color-white));
+}
+[data-theme="dark"] .data-table td {
+  border-bottom-color: var(--color-slate-100);
+}
+[data-theme="dark"] .data-table tbody tr:nth-child(even) {
+  background-color: rgba(255, 255, 255, 0.025);
+}
+[data-theme="dark"] .data-table tbody tr:hover {
+  background-color: rgba(59, 130, 246, 0.07) !important;
+}
+
+/* ML badge — diverging state */
+[data-theme="dark"] .ml-badge.ml-differs {
+  background: #1a1508;
+  border-color: #5a3810;
+}
+
+/* Sidebar collapse toggle */
+[data-theme="dark"] .sidebar-toggle-btn {
+  color: var(--color-slate-600);
+}
+[data-theme="dark"] .sidebar-toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--color-slate-700);
+  border-color: var(--color-slate-300);
+}
+
+/*
+   Navbar brand text — the navbar always uses a hardcoded dark gradient
+   (independent of theme), but --color-white becomes a dark surface color
+   in dark mode, making .navbar-title invisible. Force readable values.
+*/
+[data-theme="dark"] .navbar-title {
+  color: rgba(255, 255, 255, 0.95);   /* near-white, readable on dark gradient */
+}
+[data-theme="dark"] .navbar-subtitle {
+  color: rgba(255, 255, 255, 0.62);   /* clearly secondary, not invisible */
+}
+
+/* Mobile backdrop (darker on dark mode) */
+[data-theme="dark"] .sidebar-backdrop {
+  background: rgba(0, 0, 0, 0.55);
+}
+
+/* ── History stat strip ── */
+[data-theme="dark"] .history-stat {
+  background: var(--color-white);
+  border-color: var(--color-slate-200);
+}
+
+/* ── Detail metadata row ── */
+[data-theme="dark"] .detail-meta-row {
+  background: var(--color-slate-50);
+  border-color: var(--color-slate-200);
+}
+
+/* ── Amount highlight tile ── */
+[data-theme="dark"] .extracted-item--highlight {
+  background: var(--color-primary-50);
+  border-color: var(--color-primary-light);
+}
+
+/* ============================================================
+   DASHBOARD — Phase 11 enrichment
+   ============================================================ */
+
+/* ── KPI card as a link ──────────────────────────────────── */
+.summary-card-link {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+  cursor: pointer;
+}
+.summary-card-link:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 3px;
+  border-radius: var(--radius-lg);
+}
+
+/* ── Flagged callout ─────────────────────────────────────── */
+/* Inherits .message-box.warning — link style added below */
+.dash-inline-link {
+  color: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.dash-inline-link:hover {
+  opacity: 0.8;
+}
+
+/* ── Widget row (2-col grid) ─────────────────────────────── */
+.dash-widgets-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+@media (max-width: 820px) {
+  .dash-widgets-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Shared widget card ──────────────────────────────────── */
+.dash-widget-card {
+  margin-bottom: 0;
+  padding: 1.25rem 1.5rem;
+}
+
+.dash-widget-title {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.9px;
+  font-weight: 700;
+  color: var(--color-slate-500);
+  margin: 0 0 1rem;
+}
+
+/* ── Security overview meter ─────────────────────────────── */
+.dash-meter-row {
+  margin-bottom: 1.25rem;
+}
+
+.dash-meter-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 0.4rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-slate-600);
+}
+
+.dash-meter-pct {
+  font-size: 1.45rem;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  line-height: 1;
+}
+
+.dash-meter-track {
+  height: 7px;
+  background: var(--color-slate-200);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.dash-meter-fill {
+  height: 100%;
+  border-radius: var(--radius-full);
+  transition: width 0.6s ease;
+}
+
+.dash-meter-sub {
+  margin: 0.45rem 0 0;
+  font-size: 0.73rem;
+  color: var(--color-slate-400);
+  line-height: 1.4;
+}
+
+/* ── Overview stat strip (below meter) ───────────────────── */
+.dash-ov-stats {
+  display: flex;
+  gap: 0;
+  border-top: 1px solid var(--color-slate-100);
+  padding-top: 1rem;
+  margin-top: 0.25rem;
+}
+
+.dash-ov-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  flex: 1;
+  padding-right: 1rem;
+}
+.dash-ov-item + .dash-ov-item {
+  padding-left: 1rem;
+  border-left: 1px solid var(--color-slate-200);
+}
+
+.dash-ov-value {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--color-navy);
+  letter-spacing: -0.4px;
+  line-height: 1.1;
+}
+
+.dash-ov-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  font-weight: 600;
+  color: var(--color-slate-400);
+}
+
+/* ── Quick actions panel ─────────────────────────────────── */
+.dash-quick-actions {
+  display: flex;
+  flex-direction: column;
+}
+
+.dash-action-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  margin-top: auto;
+}
+
+.dash-action-btn {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  width: 100% !important;
+  gap: 0.45rem;
+  font-size: 0.87rem !important;
+}
+
+/* ── Recent checks section ───────────────────────────────── */
+.dash-recent-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.dash-section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.dash-section-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-navy);
+  margin: 0;
+}
+
+.dash-view-all {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-primary);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+.dash-view-all:hover {
+  color: var(--color-primary-dark);
+}
+
+.dash-recent-card {
+  padding: 0;
+  overflow: hidden;
+  margin-bottom: 0;
+}
+
+.dash-recent-row {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.65rem 1.25rem;
+  border-bottom: 1px solid var(--color-slate-100);
+  text-decoration: none;
+  color: inherit;
+  transition: background var(--transition-fast);
+  min-height: 48px;
+}
+.dash-recent-row:last-child {
+  border-bottom: none;
+}
+.dash-recent-row:hover {
+  background: var(--color-slate-50);
+}
+.dash-recent-row:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
+}
+
+/* Pill — fixed minimum width so amounts/times don't crowd it */
+.dash-recent-pill {
+  flex-shrink: 0;
+  min-width: 100px;
+  text-align: center;
+}
+
+.dash-recent-sender {
+  flex: 1;
+  font-size: 0.87rem;
+  font-weight: 500;
+  color: var(--color-navy);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dash-recent-unknown {
+  color: var(--color-slate-400);
+  font-style: italic;
+}
+
+.dash-recent-amount {
+  font-size: 0.83rem;
+  font-weight: 600;
+  color: var(--color-slate-600);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.dash-recent-time {
+  font-size: 0.75rem;
+  color: var(--color-slate-400);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ── Empty-state nudge ───────────────────────────────────── */
+.dash-empty-nudge {
+  text-align: center;
+  padding: 3rem 2rem;
+  background: var(--color-white);
+  border: 1px dashed var(--color-slate-300);
+  border-radius: var(--radius-lg);
+}
+
+.dash-nudge-icon {
+  font-size: 2.5rem;
+  margin-bottom: 0.75rem;
+  line-height: 1;
+}
+
+.dash-empty-nudge h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--color-navy);
+  margin: 0 0 0.5rem;
+}
+
+.dash-empty-nudge p {
+  font-size: 0.875rem;
+  color: var(--color-slate-500);
+  max-width: 380px;
+  margin: 0 auto 1.5rem;
+  line-height: 1.6;
+}
+
+.dash-nudge-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* ── Responsive overrides ────────────────────────────────── */
+@media (max-width: 480px) {
+  .dash-recent-amount {
+    display: none; /* saves space on narrow screens */
+  }
+  .dash-recent-row {
+    padding: 0.55rem 0.9rem;
+    gap: 0.6rem;
+  }
+  .dash-recent-pill {
+    min-width: 80px;
+  }
+  .dash-ov-stats {
+    gap: 0;
+  }
+}
+
+/* ── Rate-limit box in MessageHistory ────────────────────── */
+.history-rate-limit-box {
+  align-items: flex-start;
+}
+.history-retry-btn {
+  margin-top: 0.25rem;
+  font-size: 0.82rem;
+  padding: 0.4rem 1rem;
+  min-width: 130px;
+}
+
+/* ── Dark mode overrides ─────────────────────────────────── */
+[data-theme="dark"] .dash-empty-nudge {
+  background: var(--color-white);
+  border-color: var(--color-slate-300);
+}
+[data-theme="dark"] .dash-recent-row:hover {
+  background: var(--color-slate-50);
+}
+[data-theme="dark"] .dash-meter-track {
+  background: var(--color-slate-200);
+}
+[data-theme="dark"] .dash-ov-stats {
+  border-top-color: var(--color-slate-200);
+}
+[data-theme="dark"] .dash-ov-item + .dash-ov-item {
+  border-left-color: var(--color-slate-200);
 }
