@@ -22,15 +22,15 @@
 //     GET  /api/predictions
 // ============================================================
 
-// VITE_API_BASE controls where the frontend sends API requests.
-//   Development (npm run dev):  "http://127.0.0.1:5001"  (set in .env)
-//   Docker / production:        ""  (empty → same-origin, Nginx proxies /api)
-// NOTE: We must NOT use || here — empty string is intentional for Docker mode.
+// VITE_API_BASE_URL controls where the frontend sends API requests.
+//   Development (npm run dev):  "http://127.0.0.1:5001/api"  (set in frontend/.env)
+//   Production (Netlify):       set VITE_API_BASE_URL in Netlify dashboard env vars
+//                               value: https://mobile-money-fraud-detection-22ta.onrender.com/api
+//
+// The base URL MUST include the /api segment.
+// All callers append paths like /auth/login, /wallet, /transactions — no /api prefix.
 const API_BASE =
-  import.meta.env.VITE_API_BASE !== undefined &&
-  import.meta.env.VITE_API_BASE !== null
-    ? import.meta.env.VITE_API_BASE
-    : "http://127.0.0.1:5001";
+  import.meta.env.VITE_API_BASE_URL || "https://mobile-money-fraud-detection-22ta.onrender.com/api";
 const IS_DEV = import.meta.env.DEV;
 
 // ── Helpers ────────────────────────────────────────────────
@@ -74,9 +74,9 @@ function _cacheSet(path, result) {
  * Bust cached GET results whose key starts with `prefix`.
  * Call this from POST/PATCH/DELETE handlers after a write that would
  * make a cached list stale (e.g. after submitting a new message check,
- * call bustCache("/api/message-checks") to force a fresh history load).
+ * call bustCache("/message-checks") to force a fresh history load).
  *
- * @param {string} prefix  URL prefix to match (e.g. "/api/wallet")
+ * @param {string} prefix  URL prefix to match (e.g. "/wallet")
  */
 function bustCache(prefix) {
   for (const key of _cache.keys()) {
@@ -247,7 +247,7 @@ async function refreshToken() {
   const token = localStorage.getItem("token");
   if (!token) return false;
 
-  const url = `${API_BASE}/api/auth/refresh`;
+  const url = `${API_BASE}/auth/refresh`;
   _log("Refreshing token...");
 
   try {

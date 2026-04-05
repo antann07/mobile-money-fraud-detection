@@ -47,7 +47,7 @@ function Dashboard() {
 
   async function checkHealth() {
     try {
-      await publicFetch("/api/health");
+      await publicFetch("/health");
       if (mountedRef.current) setHealthOk(true);
     } catch {
       if (mountedRef.current) setHealthOk(false);
@@ -63,8 +63,8 @@ function Dashboard() {
 
     try {
       const [walletRes, historyRes] = await Promise.all([
-        authFetch("/api/wallet"),
-        authFetch("/api/message-checks/history"),
+        authFetch("/wallet"),
+        authFetch("/message-checks/history"),
       ]);
 
       if (!mountedRef.current) return; // unmounted before both resolved

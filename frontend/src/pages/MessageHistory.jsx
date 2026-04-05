@@ -53,7 +53,7 @@ function MessageHistory() {
     }
 
     try {
-      const { data, response } = await authFetch("/api/message-checks/history");
+      const { data, response } = await authFetch("/message-checks/history");
       if (!mountedRef.current) return; // component unmounted while request was in-flight
 
       if (response.ok) {

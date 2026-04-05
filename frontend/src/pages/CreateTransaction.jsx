@@ -34,7 +34,7 @@ function CreateTransaction() {
 
   async function loadWallets() {
     try {
-      const { data, response } = await authFetch("/api/wallet");
+      const { data, response } = await authFetch("/wallet");
       if (response.ok) {
         setWallets(data.wallets || []);
         if (data.wallets?.length > 0) {
@@ -75,7 +75,7 @@ function CreateTransaction() {
     };
 
     try {
-      const { data, response } = await authFetch("/api/transactions/add", "POST", payload);
+      const { data, response } = await authFetch("/transactions/add", "POST", payload);
 
       if (response.status === 201) {
         setMessage("Transaction added and scored successfully!");

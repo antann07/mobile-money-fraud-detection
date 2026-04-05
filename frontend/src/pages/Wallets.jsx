@@ -60,7 +60,7 @@ function Wallets() {
 
     setLoading(true);
     try {
-      const { data, response } = await authFetch("/api/wallet");
+      const { data, response } = await authFetch("/wallet");
 
       if (response.ok) {
         setWallets(data.wallets || []);
@@ -110,7 +110,7 @@ function Wallets() {
     }
 
     try {
-      const { data, response } = await authFetch("/api/wallet/add", "POST", {
+      const { data, response } = await authFetch("/wallet/add", "POST", {
         wallet_number: walletNumber,
         provider,
         wallet_name: walletName,
@@ -148,7 +148,7 @@ function Wallets() {
     setActionLoading(walletId);
     setMessage("");
     try {
-      const { data, response } = await authFetch(`/api/wallet/${walletId}/primary`, "PATCH");
+      const { data, response } = await authFetch(`/wallet/${walletId}/primary`, "PATCH");
       if (response.ok) {
         setWallets(data.wallets || []);
         setMessage("Primary wallet updated.");
@@ -172,7 +172,7 @@ function Wallets() {
     setActionLoading(walletId);
     setMessage("");
     try {
-      const { data, response } = await authFetch(`/api/wallet/${walletId}`, "DELETE");
+      const { data, response } = await authFetch(`/wallet/${walletId}`, "DELETE");
       if (response.ok) {
         setWallets((prev) => prev.filter((w) => w.id !== walletId));
         setMessage("Wallet removed.");

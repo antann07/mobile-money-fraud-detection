@@ -28,7 +28,7 @@ function Login() {
     }
 
     setLoading(true);
-    const url = `${API_BASE}/api/auth/login`;
+    const url = `${API_BASE}/auth/login`;
 
     // Send the correct key so the backend receives either {email:…} or {username:…}.
     // The backend accepts both — this keeps the payload semantically correct.

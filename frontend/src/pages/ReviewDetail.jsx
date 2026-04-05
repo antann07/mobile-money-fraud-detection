@@ -50,7 +50,7 @@ function ReviewDetail() {
 
   async function fetchDetail() {
     try {
-      const { data, response } = await authFetch(`/api/reviews/${id}`);
+      const { data, response } = await authFetch(`/reviews/${id}`);
       if (response.ok) {
         setCheck(data.data?.message_check || null);
         setPrediction(data.data?.prediction || null);
@@ -89,7 +89,7 @@ function ReviewDetail() {
 
     setSaving(true);
     try {
-      const { data, response } = await authFetch(`/api/reviews/${id}`, "POST", {
+      const { data, response } = await authFetch(`/reviews/${id}`, "POST", {
         reviewer_label: reviewerLabel,
         review_status: reviewStatus,
         notes: notes.trim() || null,

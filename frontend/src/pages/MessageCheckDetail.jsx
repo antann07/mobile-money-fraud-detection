@@ -58,7 +58,7 @@ function MessageCheckDetail() {
     if (!token) { setError("You must log in first."); setLoading(false); return; }
 
     try {
-      const { data, response } = await authFetch(`/api/message-checks/${id}`);
+      const { data, response } = await authFetch(`/message-checks/${id}`);
       if (response.ok) {
         setCheck(data.data?.message_check || null);
         setPrediction(data.data?.prediction || null);

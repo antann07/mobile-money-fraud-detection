@@ -45,7 +45,7 @@ function Transactions() {
     }
 
     try {
-      const { data, response } = await authFetch("/api/transactions");
+      const { data, response } = await authFetch("/transactions");
       if (response.ok) {
         setTransactions(data.transactions || []);
       } else if (response.status === 401) {
@@ -111,7 +111,7 @@ function Transactions() {
     };
 
     try {
-      const { data, response } = await authFetch("/api/transactions/add", "POST", payload);
+      const { data, response } = await authFetch("/transactions/add", "POST", payload);
 
       if (response.status === 201) {
         setMessage("Transaction added and scored successfully!");

@@ -58,7 +58,7 @@ function CheckMessage() {
   useEffect(() => {
     async function loadWallets() {
       try {
-        const { data, response } = await authFetch("/api/wallet");
+        const { data, response } = await authFetch("/wallet");
         if (response.ok) {
           const list = data.wallets || [];
           setWallets(list);
@@ -86,7 +86,7 @@ function CheckMessage() {
     setLoading(true);
     try {
       const { data, response } = await authFetch(
-        "/api/message-checks/sms-check", "POST",
+        "/message-checks/sms-check", "POST",
         { raw_text: smsText.trim(), wallet_id: Number(walletId) }
       );
       if (response.ok) {
@@ -219,7 +219,7 @@ function CheckMessage() {
       }
 
       const { data, response } = await authFetchMultipart(
-        "/api/message-checks/upload-screenshot", formData
+        "/message-checks/upload-screenshot", formData
       );
 
       if (response.ok) {

@@ -27,7 +27,7 @@ function FraudAlerts() {
     }
 
     try {
-      const { data, response } = await authFetch("/api/predictions");
+      const { data, response } = await authFetch("/predictions");
       if (response.ok) {
         setPredictions(data.predictions || []);
       } else if (response.status === 401) {

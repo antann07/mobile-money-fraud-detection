@@ -54,7 +54,7 @@ function Register() {
     }
 
     setLoading(true);
-    const url = `${API_BASE}/api/auth/register`;
+    const url = `${API_BASE}/auth/register`;
     const payload = {
       full_name: fullName,
       username: username || undefined,

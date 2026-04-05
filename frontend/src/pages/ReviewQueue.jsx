@@ -39,13 +39,13 @@ function ReviewQueue() {
 
   async function fetchFlagged() {
     try {
-      let { data, response } = await authFetch("/api/reviews/flagged");
+      let { data, response } = await authFetch("/reviews/flagged");
 
       // If 403, the token role may be stale — try refreshing and retry once
       if (response.status === 403) {
         const refreshed = await refreshToken();
         if (refreshed) {
-          ({ data, response } = await authFetch("/api/reviews/flagged"));
+          ({ data, response } = await authFetch("/reviews/flagged"));
         }
       }
 
