@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { authFetch, authFetchMultipart } from "../services/api";
+import { extractTextFromImage } from "../utils/ocrHelper";
 import PageLayout from "../components/PageLayout";
 import {
   VERDICT_LABEL, VERDICT_HEADLINE, VERDICT_GUIDANCE, RISK_ITEMS,
@@ -42,6 +43,7 @@ function CheckMessage() {
   const [ocrError, setOcrError] = useState("");           // OCR failure message
   const [ocrUsable, setOcrUsable] = useState(false);       // true when OCR text passed usability gate
   const [isDragging, setIsDragging] = useState(false);   // Phase-8: drag-and-drop highlight
+  const [ocrProgress, setOcrProgress] = useState(null);  // { status, progress } from Tesseract.js
   const dropRef = useRef(null);
   const resultRef = useRef(null);
 
@@ -159,6 +161,7 @@ function CheckMessage() {
     setOcrLowConfidence(false);
     setOcrError("");
     setOcrUsable(false);
+    setOcrProgress(null);
 
     if (!file)      { setError("Please select a screenshot file."); return; }
     if (!walletId)  { setError("Please select a wallet first."); return; }
@@ -168,10 +171,52 @@ function CheckMessage() {
     }
 
     setLoading(true);
+
+    // ── Step A: Run OCR in the browser using Tesseract.js ──
+    let clientOcrText = "";
+    let clientOcrConf = 0;
+    try {
+      setOcrProgress({ status: "Preparing image…", progress: 0 });
+      const ocrResult = await extractTextFromImage(file, (info) => {
+        // Map Tesseract internal status strings to user-friendly labels
+        const LABELS = {
+          "loading tesseract core": "Loading OCR engine…",
+          "initializing tesseract":  "Starting OCR engine…",
+          "loading language traineddata": "Loading language data…",
+          "initializing api":        "Initialising…",
+          "recognizing text":        "Reading text…",
+        };
+        const status = LABELS[info.status] || info.status;
+        setOcrProgress({ status, progress: info.progress ?? 0 });
+      });
+      setOcrProgress(null);
+      clientOcrText = ocrResult.text || "";
+      clientOcrConf = ocrResult.confidence || 0;
+      if (clientOcrText) {
+        setOcrText(clientOcrText);
+        setOcrConfidence(clientOcrConf);
+        setOcrUsable(clientOcrText.length >= 10);
+        setOcrLowConfidence(clientOcrConf < 0.4);
+      }
+      if (ocrResult.error) {
+        setOcrError(ocrResult.error);
+      }
+    } catch (ocrErr) {
+      console.error("[CheckMessage] Browser OCR failed:", ocrErr);
+      setOcrProgress(null);
+      // Non-fatal — continue uploading without extracted text
+    }
+
+    // ── Step B: Upload screenshot + pre-extracted text to backend ──
     try {
       const formData = new FormData();
       formData.append("file", file);          // must match backend field name
       formData.append("wallet_id", walletId);
+      // Send browser-extracted text so backend skips server-side Tesseract
+      if (clientOcrText) {
+        formData.append("extracted_text", clientOcrText);
+        formData.append("ocr_confidence", String(clientOcrConf));
+      }
 
       const { data, response } = await authFetchMultipart(
         "/api/message-checks/upload-screenshot", formData
@@ -470,7 +515,32 @@ function CheckMessage() {
       {loading && (
         <div className="loading-state">
           <div className="spinner"></div>
-          <p>{tab === "sms" ? "Checking message…" : "Reading screenshot…"}</p>
+          {tab === "sms" ? (
+            <p>Checking message…</p>
+          ) : ocrProgress ? (
+            <div style={{ textAlign: "center", minWidth: "200px" }}>
+              <p style={{ margin: "0 0 0.5rem", fontSize: "0.9rem" }}>
+                {ocrProgress.status}
+              </p>
+              <div style={{
+                height: "6px", background: "var(--color-slate-200, #e2e8f0)",
+                borderRadius: "3px", overflow: "hidden",
+              }}>
+                <div style={{
+                  height: "100%",
+                  width: `${Math.round((ocrProgress.progress || 0) * 100)}%`,
+                  background: "var(--color-primary, #3b82f6)",
+                  borderRadius: "3px",
+                  transition: "width 0.3s ease",
+                }} />
+              </div>
+              <p style={{ margin: "0.4rem 0 0", fontSize: "0.78rem", color: "var(--color-slate-400)" }}>
+                {Math.round((ocrProgress.progress || 0) * 100)}%
+              </p>
+            </div>
+          ) : (
+            <p>Uploading &amp; analysing…</p>
+          )}
         </div>
       )}
 
@@ -491,6 +561,31 @@ function CheckMessage() {
                 Check ID: {mc.id || "—"} · Status: {mc.status || "pending"}
               </p>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* ── OCR failed fallback — clear prompt to use SMS tab ── */}
+      {!loading && ocrError && !result && tab === "screenshot" && (
+        <div className="message-box warning" style={{ marginTop: "1rem" }} role="status">
+          <span className="message-icon">⚠️</span>
+          <div>
+            <strong>Could not read text from this screenshot.</strong>
+            <p style={{ margin: "0.35rem 0 0.5rem", fontSize: "0.9rem" }}>
+              {ocrError}
+            </p>
+            <button
+              type="button"
+              className="btn btn-secondary"
+              style={{ fontSize: "0.85rem", padding: "0.3rem 0.8rem" }}
+              onClick={() => {
+                setTab("sms");
+                setError(""); setWarning(""); setOcrError("");
+                setResult(null); setOcrText(""); setOcrConfidence(null);
+              }}
+            >
+              Switch to SMS Text tab
+            </button>
           </div>
         </div>
       )}

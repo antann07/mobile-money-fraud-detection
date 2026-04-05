@@ -200,7 +200,8 @@ def upload_screenshot(current_user):
     logger.info("[UPLOAD] Step 7 — file saved: user_id=%s name=%s size=%d", user_id, safe_filename, size)
 
     # -- Step 8: OCR text extraction --
-    # Phase-8 Part 2 refined: attempt OCR, use usability gate, handle crashes gracefully
+    # The frontend may send pre-extracted text (browser-side Tesseract.js).
+    # If present, skip server-side OCR entirely.
     extracted_text = None
     ocr_confidence = 0.0
     ocr_low_confidence = False
@@ -210,7 +211,21 @@ def upload_screenshot(current_user):
     context_flags: list = []                               # v6.5
     contradictory_context: bool = False                    # v6.5
 
-    if ocr_is_available():
+    client_ocr_text = (request.form.get("extracted_text") or "").strip()
+    client_ocr_conf = request.form.get("ocr_confidence")
+
+    if client_ocr_text and len(client_ocr_text) >= 10:
+        # Frontend already ran OCR — trust the extracted text
+        extracted_text = client_ocr_text[:5000]  # cap length for safety
+        try:
+            ocr_confidence = min(1.0, max(0.0, float(client_ocr_conf))) if client_ocr_conf else 0.5
+        except (TypeError, ValueError):
+            ocr_confidence = 0.5
+        ocr_usable = True
+        ocr_low_confidence = ocr_confidence < 0.4
+        logger.info("[UPLOAD] Step 8 — using client-side OCR text: %d chars, conf=%.2f, user_id=%s",
+                    len(extracted_text), ocr_confidence, user_id)
+    elif ocr_is_available():
         logger.info("[UPLOAD] Step 8 — OCR: starting extraction. user_id=%s file=%s", user_id, safe_filename)
         try:
             ocr_result = ocr_extract_text(save_path)
