@@ -61,6 +61,13 @@ services:
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
       TOKEN_EXPIRY_HOURS: ${TOKEN_EXPIRY_HOURS:-24}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      MAIL_SERVER: ${MAIL_SERVER:-}
+      MAIL_PORT: ${MAIL_PORT:-587}
+      MAIL_USE_TLS: ${MAIL_USE_TLS:-1}
+      MAIL_USERNAME: ${MAIL_USERNAME:-}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+      MAIL_DEFAULT_FROM: ${MAIL_DEFAULT_FROM:-}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
     volumes:
       - uploads:/app/uploads
       - ml_models:/app/ml_models

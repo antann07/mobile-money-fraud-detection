@@ -10,14 +10,19 @@ from config import get_config
 
 logger = logging.getLogger(__name__)
 
-from models.user import (
-    create_user, get_user_by_email, get_user_by_email_or_username,
-    get_user_by_username, increment_failed_logins, lock_account,
-    reset_failed_logins, update_password,
-)
 from models.reset_token import (
     create_reset_token, get_valid_tokens_for_user,
     mark_token_used, invalidate_all_tokens,
+)
+from services.email_service import send_welcome_email, send_password_reset_email, send_verification_email
+from models.email_verification import (
+    create_verification_token, get_valid_verification_tokens,
+    invalidate_all_verification_tokens,
+)
+from models.user import (
+    create_user, get_user_by_email, get_user_by_email_or_username,
+    get_user_by_username, increment_failed_logins, lock_account,
+    reset_failed_logins, update_password, set_email_verified,
 )
 
 _cfg = get_config()
@@ -182,12 +187,41 @@ def register_user(data: dict) -> tuple[dict, int]:
     user.pop("password_hash", None)
     token = generate_token(user["id"], user["role"])
 
-    return {
-        "success": True,
-        "message": "User registered successfully.",
-        "token": token,
-        "user": user,
-    }, 201
+    # Email verification or welcome email (non-blocking — failure does not block registration)
+    if _cfg.EMAIL_VERIFICATION_ENABLED:
+        try:
+            raw_vtoken = secrets.token_urlsafe(32)
+            vtoken_hash = _hash_password(raw_vtoken)
+            expires_at = (
+                datetime.now(timezone.utc)
+                + timedelta(hours=_cfg.EMAIL_VERIFICATION_EXPIRY_HOURS)
+            ).isoformat()
+            create_verification_token(user["id"], vtoken_hash, expires_at)
+            send_verification_email(email, data["full_name"].strip(), raw_vtoken)
+            logger.info("Verification email queued for user_id=%s", user["id"])
+        except Exception:
+            logger.exception("Failed to send verification email to %s", email)
+
+        return {
+            "success": True,
+            "message": "Registration successful! Please check your email to verify your account.",
+            "token": token,
+            "user": user,
+            "email_verification_required": True,
+        }, 201
+    else:
+        try:
+            send_welcome_email(email, data["full_name"].strip())
+        except Exception:
+            logger.exception("Failed to send welcome email to %s", email)
+
+        return {
+            "success": True,
+            "message": "Registration successful! A welcome email has been sent.",
+            "token": token,
+            "user": user,
+            "email_verification_required": False,
+        }, 201
 
 
 def login_user(data: dict) -> tuple[dict, int]:
@@ -279,11 +313,11 @@ def request_password_reset(email: str) -> tuple[dict, int]:
 
     Security contract:
       - The raw token is NEVER included in the API response body.
-      - In development mode only, the token is logged to the server
-        console so developers can test the flow without an email service.
-      - In production mode, the token must be delivered only through a
-        properly configured email transport (not yet wired here — add
-        a call to send_reset_email() when the email service is ready).
+      - A password reset email is sent via SMTP when configured.
+      - In development mode, the token is also logged to the server
+        console so developers can test the flow without SMTP.
+      - When SMTP is not configured, the email service logs the token
+        to the console as a dev fallback.
     """
     email = email.strip().lower()
     user = get_user_by_email(email)
@@ -308,9 +342,16 @@ def request_password_reset(email: str) -> tuple[dict, int]:
 
     create_reset_token(user["id"], token_hash, expires_at)
 
+    # Send reset email (best-effort — failure is logged, not exposed to user)
+    try:
+        sent = send_password_reset_email(email, raw_token)
+        if sent:
+            logger.info("Password reset email sent to %s", email)
+    except Exception:
+        logger.exception("Failed to send password reset email to %s", email)
+
     if _cfg.DEBUG:
-        # Development only: log the token to the server console.
-        # This is intentionally not in the API response.
+        # Development only: also log the token to the server console.
         logger.info(
             "[DEV] Password reset token for user_id=%s email=%s: %s",
             user["id"], email, raw_token,
@@ -318,14 +359,6 @@ def request_password_reset(email: str) -> tuple[dict, int]:
         logger.info(
             "[DEV] Reset link: /reset-password?email=%s&token=%s",
             email, raw_token,
-        )
-    else:
-        # Production: deliver via email here.
-        # Example: send_reset_email(email, raw_token)
-        logger.info(
-            "Password reset token generated for user_id=%s — "
-            "email delivery not yet configured.",
-            user["id"],
         )
 
     return success_msg, 200
@@ -398,3 +431,85 @@ def reset_password(email: str, token: str, new_password: str) -> tuple[dict, int
         user["id"], len(tokens),
     )
     return {"success": False, "errors": [_RESET_INVALID_MSG]}, 400
+
+
+# ----------- email verification -----------
+
+_VERIFY_INVALID_MSG = "This verification link is invalid or has expired. Please request a new one."
+
+
+def verify_email(email: str, token: str) -> tuple[dict, int]:
+    """Verify a user's email using the verification token."""
+    email = email.strip().lower()
+    user = get_user_by_email(email)
+
+    if not user:
+        return {"success": False, "errors": [_VERIFY_INVALID_MSG]}, 400
+
+    if user.get("email_verified"):
+        return {"success": True, "message": "Email already verified. You can sign in."}, 200
+
+    tokens = get_valid_verification_tokens(user["id"])
+    now = datetime.now(timezone.utc)
+
+    if not tokens:
+        return {"success": False, "errors": [_VERIFY_INVALID_MSG]}, 400
+
+    for stored in tokens:
+        expires = stored["expires_at"]
+        if isinstance(expires, str):
+            expires = datetime.fromisoformat(expires)
+        if expires.tzinfo is None:
+            expires = expires.replace(tzinfo=timezone.utc)
+
+        if now > expires:
+            continue
+
+        try:
+            matched = _check_password(token, stored["token_hash"])
+        except Exception:
+            logger.exception("bcrypt error for verification token id=%s", stored.get("id"))
+            continue
+
+        if matched:
+            set_email_verified(user["id"])
+            invalidate_all_verification_tokens(user["id"])
+            logger.info("Email verified for user_id=%s", user["id"])
+            return {"success": True, "message": "Email verified successfully! You can now sign in."}, 200
+
+    return {"success": False, "errors": [_VERIFY_INVALID_MSG]}, 400
+
+
+def resend_verification_email(email: str) -> tuple[dict, int]:
+    """Resend a verification email for the given address."""
+    email = email.strip().lower()
+    user = get_user_by_email(email)
+
+    # Generic response to avoid email enumeration
+    success_msg = {
+        "success": True,
+        "message": "If that email is registered and unverified, a verification link has been sent.",
+    }
+
+    if not user:
+        return success_msg, 200
+
+    if user.get("email_verified"):
+        return {"success": True, "message": "Email already verified. You can sign in."}, 200
+
+    # Invalidate old tokens and create a new one
+    invalidate_all_verification_tokens(user["id"])
+    raw_vtoken = secrets.token_urlsafe(32)
+    vtoken_hash = _hash_password(raw_vtoken)
+    expires_at = (
+        datetime.now(timezone.utc)
+        + timedelta(hours=_cfg.EMAIL_VERIFICATION_EXPIRY_HOURS)
+    ).isoformat()
+    create_verification_token(user["id"], vtoken_hash, expires_at)
+
+    try:
+        send_verification_email(email, user["full_name"], raw_vtoken)
+    except Exception:
+        logger.exception("Failed to resend verification email to %s", email)
+
+    return success_msg, 200

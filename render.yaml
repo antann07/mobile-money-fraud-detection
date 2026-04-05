@@ -1,0 +1,55 @@
+# ============================================================
+# Render Blueprint — MTN MoMo Fraud Detection Backend
+# ============================================================
+# Render reads this file to auto-configure the web service.
+# Push to the linked repo and Render deploys automatically.
+#
+# Database: Use Neon PostgreSQL (external) — set DATABASE_URL in env.
+#
+# NOTE: The `disk` section requires a paid Render plan ($7+/month).
+#       On the free tier, remove the `disk:` block entirely.
+#       Uploaded screenshots will still work at runtime but won't
+#       persist across deploys.
+#
+# NOTE: Tesseract OCR is NOT available on Render's native Python
+#       runtime. Screenshot OCR analysis will be disabled (the API
+#       degrades gracefully). SMS text checking works fully.
+# ============================================================
+
+services:
+  - type: web
+    name: momo-fraud-api
+    runtime: python
+    region: oregon
+    buildCommand: chmod +x build.sh && ./build.sh
+    startCommand: cd flask_backend && gunicorn wsgi:application --bind 0.0.0.0:$PORT --workers 1 --timeout 120 --graceful-timeout 30 --max-requests 1000 --max-requests-jitter 50 --access-logfile - --error-logfile -
+    healthCheckPath: /api/health
+    envVars:
+      - key: FLASK_ENV
+        value: production
+      - key: FLASK_DEBUG
+        value: "0"
+      - key: PYTHON_VERSION
+        value: "3.12.0"
+      - key: SECRET_KEY
+        generateValue: true
+      - key: JWT_SECRET
+        generateValue: true
+      - key: DATABASE_URL
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
+      - key: FRONTEND_URL
+        sync: false
+      - key: TOKEN_EXPIRY_HOURS
+        value: "12"
+      - key: LOG_LEVEL
+        value: INFO
+      - key: MODEL_DIR
+        value: /opt/render/project/src/flask_backend/ml_models
+      - key: UPLOAD_DIR
+        value: /opt/render/project/src/flask_backend/uploads/screenshots
+    disk:
+      name: uploads
+      mountPath: /opt/render/project/src/flask_backend/uploads
+      sizeGB: 1

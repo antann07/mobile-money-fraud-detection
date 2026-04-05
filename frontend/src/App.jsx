@@ -16,10 +16,11 @@ import Register from "./pages/Register";
 import Login from "./pages/Login";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
+import VerifyEmail from "./pages/VerifyEmail";
 import "./App.css";
 
 // Auth routes use a full-page centered layout — no sidebar chrome beside a login form.
-const AUTH_ROUTES = ["/login", "/register", "/forgot-password", "/reset-password"];
+const AUTH_ROUTES = ["/login", "/register", "/forgot-password", "/reset-password", "/verify-email"];
 
 function AppShell() {
   const location = useLocation();
@@ -59,6 +60,7 @@ function AppShell() {
             <Route path="/login" element={<Login />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/verify-email" element={<VerifyEmail />} />
 
             {/* Catch-all → Dashboard */}
             <Route path="*" element={<Navigate to="/dashboard" replace />} />

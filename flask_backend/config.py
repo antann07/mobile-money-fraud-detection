@@ -50,6 +50,10 @@ class Config:
     # ── Password reset ───────────────────────────────────────────
     RESET_TOKEN_EXPIRY_MINUTES = int(os.environ.get("RESET_TOKEN_EXPIRY_MINUTES", "30"))
 
+    # ── Email verification ───────────────────────────────────────
+    EMAIL_VERIFICATION_ENABLED = os.environ.get("EMAIL_VERIFICATION_ENABLED", "0") == "1"
+    EMAIL_VERIFICATION_EXPIRY_HOURS = int(os.environ.get("EMAIL_VERIFICATION_EXPIRY_HOURS", "24"))
+
     # ── Flask ────────────────────────────────────────────────────
     DEBUG = os.environ.get("FLASK_DEBUG", "1") == "1"
     ENV = os.environ.get("FLASK_ENV", "development")
@@ -88,6 +92,18 @@ class Config:
     # Leave blank to log to stdout only (stdout is always active).
     _default_log_dir = str(_BACKEND_DIR / "logs")
     LOG_DIR = os.environ.get("LOG_DIR", _default_log_dir)
+
+    # ── Email / SMTP ──────────────────────────────────────────────
+    MAIL_SERVER = os.environ.get("MAIL_SERVER", "")
+    MAIL_PORT = int(os.environ.get("MAIL_PORT", "587"))
+    MAIL_USE_TLS = os.environ.get("MAIL_USE_TLS", "1") == "1"
+    MAIL_USERNAME = os.environ.get("MAIL_USERNAME", "")
+    MAIL_PASSWORD = os.environ.get("MAIL_PASSWORD", "")
+    MAIL_DEFAULT_FROM = os.environ.get(
+        "MAIL_DEFAULT_FROM",
+        os.environ.get("MAIL_USERNAME", "noreply@mtnfrauddetection.local"),
+    )
+    FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:3000")
 
     # ── Logging ──────────────────────────────────────────────────
     LOG_LEVEL = os.environ.get("LOG_LEVEL", "INFO").upper()

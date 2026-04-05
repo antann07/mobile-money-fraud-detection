@@ -5,6 +5,7 @@ from flask import Blueprint, request, jsonify
 from services.auth_service import (
     register_user, login_user, generate_token,
     request_password_reset, reset_password,
+    verify_email, resend_verification_email,
 )
 from middleware.auth_middleware import token_required
 from models.user import get_user_by_id
@@ -132,6 +133,56 @@ def do_reset_password():
             audit_log("PASSWORD_RESET_FAILED", detail=f"email={email}")
     except Exception:
         logger.exception("Audit log failed after reset-password for email=%s", email)
+
+    return jsonify(body), status
+
+
+@auth_bp.route("/verify-email", methods=["POST"])
+def do_verify_email():
+    data = request.get_json(silent=True)
+    if not data:
+        return jsonify({"success": False, "errors": ["Request body must be JSON."]}), 400
+
+    email = (data.get("email") or "").strip()
+    token = (data.get("token") or "").strip()
+
+    if not email or not token:
+        return jsonify({"success": False, "errors": ["Email and token are required."]}), 400
+
+    logger.info("Email verification attempt for email=%s from %s", email, request.remote_addr)
+
+    try:
+        body, status = verify_email(email, token)
+    except Exception:
+        logger.exception("Email verification error for email=%s", email)
+        return jsonify({"success": False, "errors": ["Verification failed. Please try again."]}), 500
+
+    try:
+        if status == 200 and body.get("success"):
+            audit_log("EMAIL_VERIFIED", detail=f"email={email}")
+    except Exception:
+        logger.exception("Audit log failed after verify-email for email=%s", email)
+
+    return jsonify(body), status
+
+
+@auth_bp.route("/resend-verification", methods=["POST"])
+def do_resend_verification():
+    data = request.get_json(silent=True)
+    if not data:
+        return jsonify({"success": False, "errors": ["Request body must be JSON."]}), 400
+
+    email = (data.get("email") or "").strip()
+    if not email:
+        return jsonify({"success": False, "errors": ["Email is required."]}), 400
+
+    logger.info("Resend verification requested for email=%s from %s", email, request.remote_addr)
+
+    try:
+        body, status = resend_verification_email(email)
+    except Exception:
+        logger.exception("Resend verification error for email=%s", email)
+        return jsonify({"success": False, "errors": ["Request failed. Please try again."]}), 500
 
     return jsonify(body), status
 

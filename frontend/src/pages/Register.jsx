@@ -75,9 +75,16 @@ function Register() {
       if (response.status === 201 || response.ok) {
         if (data.token) localStorage.setItem("token", data.token);
         if (data.user) localStorage.setItem("user", JSON.stringify(data.user));
-        setMessage("Registration successful! Redirecting to dashboard...");
-        setMessageType("success");
-        setTimeout(() => { navigate("/dashboard"); window.location.reload(); }, 1000);
+
+        if (data.email_verification_required) {
+          setMessage(data.message || "Registration successful! Please check your email to verify your account.");
+          setMessageType("success");
+          // Don't auto-redirect — user needs to verify email first
+        } else {
+          setMessage(data.message || "Registration successful! A welcome email has been sent. Redirecting to dashboard...");
+          setMessageType("success");
+          setTimeout(() => { navigate("/dashboard"); window.location.reload(); }, 1500);
+        }
       } else if (response.status === 409) {
         const errors = data.errors || ["This email or username is already registered."];
         setMessage(Array.isArray(errors) ? errors.join(" ") : errors);

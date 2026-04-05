@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS users (
     phone_number TEXT NOT NULL,
     password_hash TEXT NOT NULL,
     role TEXT NOT NULL DEFAULT 'customer',       -- 'customer' | 'admin' | 'reviewer'
+    email_verified INTEGER NOT NULL DEFAULT 0,   -- 1 = email confirmed
     failed_login_attempts INTEGER NOT NULL DEFAULT 0,
     locked_until TIMESTAMP,                      -- NULL = not locked
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -29,6 +30,16 @@ CREATE TABLE IF NOT EXISTS password_reset_tokens (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL,
     token_hash TEXT NOT NULL,                    -- bcrypt hash of the reset token
+    expires_at TIMESTAMP NOT NULL,
+    used INTEGER NOT NULL DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+CREATE TABLE IF NOT EXISTS email_verification_tokens (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    token_hash TEXT NOT NULL,                    -- bcrypt hash of the verification token
     expires_at TIMESTAMP NOT NULL,
     used INTEGER NOT NULL DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

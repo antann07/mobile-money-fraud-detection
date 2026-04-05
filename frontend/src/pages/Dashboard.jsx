@@ -121,9 +121,19 @@ function Dashboard() {
     ? "var(--color-warning)"
     : "var(--color-danger)";
 
+  // Personalized greeting from stored user object
+  const username = (() => {
+    try {
+      const user = JSON.parse(localStorage.getItem("user"));
+      return user?.username?.trim() || null;
+    } catch { return null; }
+  })();
+
+  const greeting = username ? `Welcome, ${username}` : "Welcome";
+
   return (
     <PageLayout
-      title="Wallet Protection Dashboard"
+      title={`${greeting} — Wallet Protection Dashboard`}
       subtitle="Live overview of your wallets and message verification status."
     >
 

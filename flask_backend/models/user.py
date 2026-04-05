@@ -108,3 +108,13 @@ def update_password(user_id: int, password_hash: str) -> None:
         conn.commit()
     finally:
         conn.close()
+
+
+def set_email_verified(user_id: int) -> None:
+    """Mark user's email as verified."""
+    conn = get_db()
+    try:
+        execute(conn, f"UPDATE users SET email_verified = 1 WHERE id = {PH}", (user_id,))
+        conn.commit()
+    finally:
+        conn.close()

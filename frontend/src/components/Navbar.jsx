@@ -14,8 +14,8 @@ function getUserRole() {
 }
 
 /**
- * Return the best available display label for the logged-in user.
- * Fallback chain: full_name → username → email → role
+ * Return the username for the logged-in user.
+ * Fallback chain: username → full_name → email
  */
 function getUserDisplayName() {
   try {
@@ -23,8 +23,8 @@ function getUserDisplayName() {
     if (!raw) return null;
     const user = JSON.parse(raw);
     return (
-      user.full_name?.trim() ||
       user.username?.trim() ||
+      user.full_name?.trim() ||
       user.email?.trim() ||
       null
     );

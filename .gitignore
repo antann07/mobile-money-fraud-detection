@@ -10,6 +10,7 @@ venv/
 .env.local
 !.env.example
 !.env.pilot
+!.env.production
 !.env.compose.example
 
 # ── Node ─────────────────────────────────────────

@@ -81,6 +81,12 @@ def create_app() -> Flask:
     app = Flask(__name__)
     app.config.from_object(cfg)
 
+    # Trust reverse proxy headers (Render, Nginx, etc.) for correct
+    # client IP in rate limiting, logging, and audit trails.
+    if not cfg.DEBUG:
+        from werkzeug.middleware.proxy_fix import ProxyFix
+        app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
+
     # Flask enforces this — rejects uploads larger than this size
     app.config["MAX_CONTENT_LENGTH"] = cfg.MAX_CONTENT_LENGTH
 
