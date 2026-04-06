@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { Link } from "react-router-dom";
 import { authFetch, authFetchMultipart } from "../services/api";
 import { extractTextFromImage } from "../utils/ocrHelper";
 import PageLayout from "../components/PageLayout";
@@ -267,12 +268,14 @@ function CheckMessage() {
   // ---- Render ----
   const pred = result?.prediction;
   const mc   = result?.message_check;
+  const hasNoWallet = !walletsLoading && wallets.length === 0;
 
   return (
     <PageLayout
       title="Verify Message"
-      subtitle="Checks incoming MTN MoMo credit alerts for authenticity. Paste the full message exactly as received."
+      subtitle="Check incoming MTN MoMo credit alerts for authenticity."
     >
+      <div className="check-message-layout">
       {/* Error banner */}
       {error && (
         <div className="message-box error" role="alert" aria-live="assertive">
@@ -289,6 +292,22 @@ function CheckMessage() {
         </div>
       )}
 
+      {/* ── Wallet required — shown before tabs so it is always visible ── */}
+      {hasNoWallet && (
+        <div className="wallet-required-card" role="alert">
+          <div className="wallet-required-icon">💳</div>
+          <div className="wallet-required-body">
+            <h3 className="wallet-required-title">Link a Wallet First</h3>
+            <p className="wallet-required-desc">
+              You need at least one MTN MoMo wallet linked to your account before you can verify messages.
+            </p>
+            <Link to="/wallets" className="btn btn-primary wallet-required-cta">
+              + Add Your Wallet
+            </Link>
+          </div>
+        </div>
+      )}
+
       {/* Tab switcher */}
       <div className="tab-switcher check-tab-switcher">
         <button
@@ -302,6 +321,7 @@ function CheckMessage() {
           onClick={() => { setTab("screenshot"); setResult(null); setError(""); setWarning(""); setOcrPending(false); setOcrText(""); setOcrConfidence(null); setOcrLowConfidence(false); setOcrError(""); setOcrUsable(false); }}
         >
           &#128248; Screenshot
+          <span className="tab-badge">OCR</span>
         </button>
       </div>
 
@@ -311,20 +331,20 @@ function CheckMessage() {
           <span className="check-guidance-label">How to use</span>
           <div className="check-guidance-items">
             <div className="check-guidance-item">
-              <span className="check-guidance-icon">&#10003;</span>
-              Paste the <strong>full SMS</strong> without editing any words or numbers
+              <span className="check-guidance-icon">1</span>
+              Link a wallet, then select it from the dropdown below
             </div>
             <div className="check-guidance-item">
-              <span className="check-guidance-icon">&#10003;</span>
-              Pick the wallet <strong>that received this payment</strong>
+              <span className="check-guidance-icon">2</span>
+              Paste the <strong>full SMS</strong> exactly as received — do not edit it
             </div>
             <div className="check-guidance-item">
-              <span className="check-guidance-icon">&#10003;</span>
-              Use the <strong>Screenshot</strong> tab if the message is hard to copy
+              <span className="check-guidance-icon">3</span>
+              Tap <strong>Verify Message</strong> and get an instant result
             </div>
             <div className="check-guidance-item">
-              <span className="check-guidance-icon">&#9432;</span>
-              Only <strong>incoming MoMo credit alerts</strong> are scored &mdash; other messages are saved but not analysed
+              <span className="check-guidance-icon">📸</span>
+              Can&rsquo;t copy the text? Use the <strong>Screenshot</strong> tab instead
             </div>
           </div>
         </div>
@@ -332,17 +352,19 @@ function CheckMessage() {
 
       {/* ── SMS Form ── */}
       {tab === "sms" && (
-        <div className="form-card check-form-card">
-          <h3>Paste MoMo SMS</h3>
+        <div className={`form-card check-form-card${hasNoWallet ? " form-card--muted" : ""}`}>
+          <h3 className="check-form-title">Paste MoMo SMS</h3>
           <form onSubmit={handleSmsSubmit}>
             <div className="form-group">
-              <label htmlFor="sms-wallet-id">Which wallet received this message?</label>
+              <label htmlFor="sms-wallet-id">
+                Which wallet received this message?
+              </label>
               {walletsLoading ? (
-                <p style={{ fontSize: "0.85rem", color: "var(--color-slate-400)" }}>Loading wallets…</p>
+                <p className="form-loading-note">Loading wallets…</p>
               ) : wallets.length === 0 ? (
-                <p style={{ fontSize: "0.85rem", color: "var(--color-warning)" }}>
-                  No wallets linked yet. <a href="/wallets">Add a wallet</a> to continue.
-                </p>
+                <div className="wallet-inline-empty">
+                  <span>No wallets linked yet — use the button above.</span>
+                </div>
               ) : (
                 <select id="sms-wallet-id" value={walletId} onChange={(e) => setWalletId(e.target.value)} required>
                   {wallets.map((w) => (
@@ -358,17 +380,32 @@ function CheckMessage() {
               <textarea
                 id="sms-text"
                 className="form-textarea"
-                rows={4}
+                rows={5}
                 value={smsText}
                 onChange={(e) => setSmsText(e.target.value)}
-                placeholder="Paste the full MoMo SMS here…"
+                placeholder="Paste the complete MoMo SMS here — do not edit any words or numbers"
+                disabled={hasNoWallet}
                 required
               />
-              <span className="form-hint">{smsText.length} characters</span>
+              <div className="char-counter-row">
+                <span className={`char-counter${smsText.length > 0 ? " char-counter--active" : ""}`}>
+                  {smsText.length > 0 ? `${smsText.length} chars` : "0 chars"}
+                </span>
+                {smsText.length > 0 && smsText.length < 20 && (
+                  <span className="char-counter-hint">Keep the full message for accurate results</span>
+                )}
+              </div>
             </div>
             <div className="check-submit-row">
-              <span className="check-submit-note">Results appear below after submission</span>
-              <button type="submit" className="btn btn-primary check-verify-btn" disabled={loading || wallets.length === 0}>
+              <span className="check-submit-note">
+                {hasNoWallet ? "Add a wallet above to enable verification" : "Results appear below after submission"}
+              </span>
+              <button
+                type="submit"
+                className="btn btn-primary check-verify-btn"
+                disabled={loading || hasNoWallet || !smsText.trim()}
+                title={hasNoWallet ? "Link a wallet first" : !smsText.trim() ? "Paste an SMS first" : undefined}
+              >
                 {loading ? "Checking…" : "🔍 Verify Message"}
               </button>
             </div>
@@ -378,17 +415,17 @@ function CheckMessage() {
 
       {/* ── Screenshot Form ── */}
       {tab === "screenshot" && (
-        <div className="form-card check-form-card">
-          <h3>Upload Screenshot</h3>
+        <div className={`form-card check-form-card${hasNoWallet ? " form-card--muted" : ""}`}>
+          <h3 className="check-form-title">Upload Screenshot</h3>
           <form onSubmit={handleScreenshotSubmit}>
             <div className="form-group">
               <label htmlFor="screenshot-wallet-id">Which wallet received this payment?</label>
               {walletsLoading ? (
-                <p style={{ fontSize: "0.85rem", color: "var(--color-slate-400)" }}>Loading wallets…</p>
+                <p className="form-loading-note">Loading wallets…</p>
               ) : wallets.length === 0 ? (
-                <p style={{ fontSize: "0.85rem", color: "var(--color-warning)" }}>
-                  No wallets linked yet. <a href="/wallets">Add a wallet</a> to continue.
-                </p>
+                <div className="wallet-inline-empty">
+                  <span>No wallets linked yet — use the button above.</span>
+                </div>
               ) : (
                 <select id="screenshot-wallet-id" value={walletId} onChange={(e) => setWalletId(e.target.value)} required>
                   {wallets.map((w) => (
@@ -498,11 +535,14 @@ function CheckMessage() {
               )}
             </div>
             <div className="check-submit-row">
-              <span className="check-submit-note">Results appear below after submission</span>
+              <span className="check-submit-note">
+                {hasNoWallet ? "Add a wallet above to enable verification" : "Text is extracted automatically from your image"}
+              </span>
               <button
                 type="submit"
                 className="btn btn-primary check-verify-btn"
-                disabled={loading || wallets.length === 0 || !file || (file && file.size > MAX_FILE_SIZE)}
+                disabled={loading || hasNoWallet || !file || (file && file.size > MAX_FILE_SIZE)}
+                title={hasNoWallet ? "Link a wallet first" : !file ? "Select a screenshot first" : undefined}
               >
                 {loading ? "Uploading…" : "📤 Upload & Verify"}
               </button>
@@ -847,6 +887,7 @@ function CheckMessage() {
           </div>
         </div>
       )}
+      </div>
     </PageLayout>
   );
 }

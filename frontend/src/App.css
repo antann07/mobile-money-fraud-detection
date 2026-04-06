@@ -22,7 +22,7 @@
   --color-slate-200: #e2e8f0;
   --color-slate-100: #f1f5f9;
   --color-slate-50: #f8fafc;
-  --color-bg: #f0f4f8;
+  --color-bg: #e8edf5;
   --color-white: #ffffff;
 
   /* Semantic — softened for a professional security tool                   */
@@ -45,7 +45,7 @@
 
   /* Shadows */
   --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.09), 0 2px 3px rgba(0, 0, 0, 0.05);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
   --shadow-lg: 0 10px 25px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
   --shadow-xl: 0 20px 50px -12px rgba(0, 0, 0, 0.18);
@@ -574,13 +574,13 @@ body {
   font-size: 0.63rem;
   text-transform: uppercase;
   letter-spacing: 1.6px;
-  color: var(--color-slate-400);
+  color: var(--color-slate-500);
   font-weight: 700;
 }
 
 .sidebar-portal-label {
   font-size: 0.77rem;
-  color: var(--color-slate-500);
+  color: var(--color-slate-600);
   font-weight: 400;
   white-space: nowrap;
   overflow: hidden;
@@ -599,7 +599,7 @@ body {
   padding: 0.72rem 1.1rem;     /* tighter horizontal — visual indent from sidebar edge */
   margin: 2px 0.9rem;          /* wider margin = links are visually centred in the rail  */
   border-radius: var(--radius-sm);
-  color: var(--color-slate-500);
+  color: var(--color-slate-600);
   text-decoration: none;
   font-size: 0.87rem;
   font-weight: 500;
@@ -638,7 +638,7 @@ body {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: var(--color-slate-400);
+  color: var(--color-slate-500);
 }
 .sidebar-divider::after {
   content: '';
@@ -1302,7 +1302,7 @@ body {
   padding: 1.75rem 2rem;
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
-  border: 1px solid var(--color-slate-200);
+  border: 1.5px solid var(--color-slate-400);
   margin-bottom: 1.5rem;
 }
 
@@ -1312,8 +1312,7 @@ body {
   font-weight: 700;
   color: var(--color-navy);
   padding-bottom: 0.75rem;
-  /* slate-200 instead of slate-100 — more visible section break */
-  border-bottom: 1px solid var(--color-slate-200);
+  border-bottom: 1.5px solid var(--color-slate-300);
 }
 
 .form-card .btn-primary {
@@ -1675,7 +1674,7 @@ body {
 
 .section-title {
   font-size: 0.95rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--color-navy);
   margin-top: 0.5rem;
   margin-bottom: 0.75rem;
@@ -1683,7 +1682,7 @@ body {
   align-items: center;
   gap: 0.45rem;
   letter-spacing: -0.05px;
-  border-bottom: 1px solid var(--color-slate-200);
+  border-bottom: 1.5px solid var(--color-slate-300);
   padding-bottom: 0.5rem;
 }
 
@@ -1787,10 +1786,10 @@ body {
 
 .form-group label {
   display: block;
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--color-slate-600);
-  margin-bottom: 0.4rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--color-navy);
+  margin-bottom: 0.45rem;
   letter-spacing: 0.1px;
 }
 
@@ -1798,10 +1797,10 @@ body {
 .form-group select {
   width: 100%;
   padding: 0.6rem 0.85rem;
-  border: 1.5px solid var(--color-slate-300);
+  border: 1.5px solid var(--color-slate-500);
   border-radius: var(--radius-sm);
   font-size: 0.87rem;
-  color: var(--color-navy-mid);
+  color: var(--color-navy);
   background: var(--color-white);
   font-family: inherit;
   transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
@@ -1823,7 +1822,16 @@ body {
 
 .form-group input:not([type="checkbox"]):hover,
 .form-group select:hover {
-  border-color: var(--color-slate-400);
+  border-color: var(--color-slate-500);
+}
+
+.form-group select:disabled,
+.form-group input:not([type="checkbox"]):disabled {
+  background: var(--color-slate-100);
+  color: var(--color-slate-600);
+  cursor: not-allowed;
+  border-color: var(--color-slate-300);
+  opacity: 1;
 }
 
 .form-group input:not([type="checkbox"]):focus,
@@ -1838,7 +1846,7 @@ body {
 }
 
 .form-group input:not([type="checkbox"])::placeholder {
-  color: var(--color-slate-400);
+  color: var(--color-slate-600);
 }
 
 .form-group input[type="checkbox"] {
@@ -1917,8 +1925,11 @@ body {
 
 .btn:disabled,
 .btn-primary:disabled {
-  opacity: 0.55;
+  background: var(--color-slate-300);
+  color: var(--color-slate-500);
+  border-color: var(--color-slate-400);
   cursor: not-allowed;
+  opacity: 1;
   transform: none !important;
   box-shadow: none !important;
 }
@@ -2364,7 +2375,7 @@ body {
   cursor: pointer;
   border: none;
   background: var(--color-white);
-  color: var(--color-slate-500);
+  color: var(--color-slate-600);
   transition: all var(--transition-fast);
   letter-spacing: 0.05px;
 }
@@ -2387,10 +2398,10 @@ body {
 .form-textarea {
   width: 100%;
   padding: 0.7rem 0.85rem;
-  border: 1.5px solid var(--color-slate-300);
+  border: 1.5px solid var(--color-slate-500);
   border-radius: var(--radius-sm);
   font-size: 0.87rem;
-  color: var(--color-navy-mid);
+  color: var(--color-navy);
   background: var(--color-white);
   font-family: inherit;
   line-height: 1.6;
@@ -2399,7 +2410,7 @@ body {
 }
 
 .form-textarea:hover {
-  border-color: var(--color-slate-400);
+  border-color: var(--color-slate-500);
 }
 
 .form-textarea:focus {
@@ -2411,8 +2422,19 @@ body {
 }
 
 .form-textarea::placeholder {
-  color: var(--color-slate-400);
+  color: var(--color-slate-600);
   font-size: 0.82rem;
+}
+
+/* Intentional disabled state — locked, not broken */
+.form-textarea:disabled {
+  background: var(--color-slate-100);
+  color: var(--color-slate-600);
+  cursor: not-allowed;
+  border-color: var(--color-slate-400);
+  border-style: dashed;
+  opacity: 1;
+  resize: none;
 }
 
 .form-hint {
@@ -2420,9 +2442,19 @@ body {
   margin-top: 0.3rem;
   /* 0.75rem = 12px — WCAG 1.4.4 minimum for helper/hint text */
   font-size: 0.75rem;
-  /* WCAG 1.4.3: slate-500 (#64748b) — 4.77:1 on white, passes AA */
-  color: var(--color-slate-500);
+  /* WCAG 1.4.3: slate-600 (#475569) — 7:1 on white, passes AAA */
+  color: var(--color-slate-600);
   text-align: right;
+}
+
+/* Inline loading indicator below a form label (e.g. wallet picker loading) */
+.form-loading-note {
+  display: block;
+  padding: 0.5rem 0;
+  font-size: 0.84rem;
+  /* WCAG 1.4.3: slate-600 (#475569) — 7:1 on white, passes AAA */
+  color: var(--color-slate-600);
+  font-style: italic;
 }
 
 /* ============================================================
@@ -2863,36 +2895,38 @@ body {
 /* How-to panel: icon-led items, no raw bullets */
 .check-guidance-strip {
   background: var(--color-slate-50);
-  border: 1px solid var(--color-slate-200);
+  border: 1px solid var(--color-slate-300);
+  border-left: 3px solid var(--color-primary);
   border-radius: var(--radius-md);
-  padding: 0.65rem 1rem 0.65rem 1rem;
+  padding: 0.75rem 1.1rem;
   /* No bottom margin — page-body gap (1.5rem) handles section spacing.
      The strip should feel attached to the tab switcher above it. */
 }
 
 .check-guidance-label {
   display: block;
-  font-size: 0.67rem;
+  font-size: 0.7rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.9px;
-  color: var(--color-slate-400);
+  color: var(--color-slate-700);
   margin-bottom: 0.45rem;
 }
 
 .check-guidance-items {
   display: flex;
   flex-direction: column;
-  gap: 0.3rem;
+  gap: 0.45rem;
 }
 
 .check-guidance-item {
   display: flex;
   align-items: baseline;
   gap: 0.5rem;
-  font-size: 0.8rem;
-  color: var(--color-slate-600);
+  font-size: 0.83rem;
+  color: var(--color-slate-700);
   line-height: 1.55;
+  font-weight: 450;
 }
 
 .check-guidance-icon {
@@ -2916,32 +2950,33 @@ body {
   padding-bottom: 0;   /* footer row provides its own padding */
 }
 
-/* Verify button: auto-width on desktop, contained */
+/* Verify button: auto-width on desktop, clearly sized */
 .check-verify-btn {
   width: auto !important;
   min-width: 180px;
-  padding: 0.62rem 1.75rem;
-  font-size: 0.875rem;
-  min-height: 42px;
+  padding: 0.7rem 2rem;
+  font-size: 0.9rem;
+  min-height: 44px;
   white-space: nowrap;
+  letter-spacing: 0.05px;
 }
 
-/* Footer strip: top-border band that anchors the button inside the card */
+/* Footer strip: blue-tinted band visually anchors the button in the card */
 .check-submit-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
   margin: 0.75rem -2rem -1.75rem;   /* bleed into form-card padding edges */
-  padding: 0.85rem 2rem;
-  border-top: 1px solid var(--color-slate-100);
-  background: var(--color-slate-50);
+  padding: 0.9rem 2rem;
+  border-top: 1px solid var(--color-slate-200);
+  background: var(--color-primary-50);
   border-radius: 0 0 var(--radius-lg) var(--radius-lg);
 }
 
 .check-submit-note {
   font-size: 0.74rem;
-  color: var(--color-slate-400);
+  color: var(--color-slate-600);
   font-style: italic;
   flex: 1;
 }
@@ -2969,6 +3004,7 @@ body {
 [data-theme="dark"] .check-guidance-strip {
   background: var(--color-slate-50);
   border-color: var(--color-slate-200);
+  border-left-color: var(--color-primary-light);
 }
 
 [data-theme="dark"] .check-guidance-item strong {
@@ -2976,7 +3012,7 @@ body {
 }
 
 [data-theme="dark"] .check-submit-row {
-  background: var(--color-slate-50);
+  background: var(--color-primary-50);
   border-top-color: var(--color-slate-200);
 }
 
@@ -3451,6 +3487,273 @@ details > summary {
 /* Section title divider line */
 [data-theme="dark"] .section-title {
   border-bottom-color: var(--color-slate-200);
+}
+
+/* ============================================================
+   UI REFACTOR — Mobile navbar chip + Check Message improvements
+   ============================================================ */
+
+/* ── Navbar: compact user avatar chip (mobile only) ─────────
+   .navbar-user-chip replaces the full display name on phones.
+   Hidden on desktop where .navbar-user-identity shows instead. */
+.navbar-user-chip {
+  display: none;
+}
+
+/* ── Navbar logout: text label on desktop, × icon on mobile ─ */
+.btn-logout-icon {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  /* Hide full name + Admin role badge on small screens */
+  .navbar-user-identity {
+    display: none;
+  }
+  .navbar-role-badge {
+    display: none;
+  }
+
+  /* Show compact avatar chip */
+  .navbar-user-chip {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: rgba(59, 130, 246, 0.28);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #fff;
+    flex-shrink: 0;
+    user-select: none;
+  }
+
+  /* Admin gets a purple-tinted chip */
+  .navbar-user-chip--admin {
+    background: rgba(139, 92, 246, 0.35);
+    border-color: rgba(139, 92, 246, 0.4);
+  }
+
+  /* Tighter logout button; hide text, show × icon */
+  .btn-logout {
+    padding: 0.3rem 0.55rem;
+    min-height: 36px;
+  }
+  .btn-logout-text {
+    display: none;
+  }
+  .btn-logout-icon {
+    display: inline;
+    font-size: 0.85rem;
+    line-height: 1;
+  }
+}
+
+/* ── Wallet-required card ───────────────────────────────────
+   Shown above both form tabs when the user has no wallets.   */
+.wallet-required-card {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  padding: 1.25rem 1.5rem;
+  background: var(--color-info-bg);
+  border: 2px solid var(--color-primary);
+  border-left: 5px solid var(--color-primary);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+}
+
+.wallet-required-icon {
+  font-size: 2rem;
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+  line-height: 1;
+}
+
+.wallet-required-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.wallet-required-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-navy);
+  margin-bottom: 0.3rem;
+}
+
+.wallet-required-desc {
+  font-size: 0.87rem;
+  color: var(--color-navy-mid);
+  margin-bottom: 0.85rem;
+  line-height: 1.55;
+}
+
+.wallet-required-cta {
+  display: inline-block;
+  padding: 0.55rem 1.5rem;
+  font-size: 0.875rem;
+  text-decoration: none;
+  border-radius: var(--radius-sm);
+}
+
+@media (max-width: 480px) {
+  .wallet-required-card {
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1rem 1.1rem;
+  }
+  .wallet-required-cta {
+    width: 100%;
+    text-align: center;
+  }
+}
+
+[data-theme="dark"] .wallet-required-card {
+  background: var(--color-info-bg);
+  border-color: var(--color-info-border);
+}
+
+/* ── Form card: muted/disabled overlay ─────────────────────
+   Applied when hasNoWallet is true — dims the form to signal
+   it is blocked; wallet-required-card above it explains why.  */
+.form-card--muted {
+  opacity: 0.55;
+  pointer-events: none;
+  filter: grayscale(0.15);
+}
+
+/* Re-enable pointer events for the inline wallet empty-state link.
+   The card is muted/non-interactive, but the "Add one now" link
+   must still function so users have a second path to /wallets.    */
+.form-card--muted .wallet-inline-empty {
+  pointer-events: auto;
+}
+
+[data-theme="dark"] .form-card--muted {
+  opacity: 0.5;
+}
+
+/* ── Wallet inline empty-state (inside each form card) ─────
+   Compact banner replacing the wallet select when empty.      */
+.wallet-inline-empty {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  padding: 0.55rem 0.75rem;
+  background: var(--color-warning-bg);
+  border: 1px solid var(--color-warning-border);
+  border-radius: var(--radius-sm);
+  font-size: 0.84rem;
+  color: var(--color-slate-600);
+  line-height: 1.4;
+}
+
+.wallet-inline-link {
+  color: var(--color-primary);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+[data-theme="dark"] .wallet-inline-empty {
+  background: var(--color-warning-bg);
+  border-color: var(--color-warning-border);
+  color: var(--color-slate-600);
+}
+
+/* ── Character counter row ──────────────────────────────────
+   Row below the SMS textarea: left = char count, right = hint. */
+.char-counter-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 0.3rem;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.char-counter {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--color-slate-400);
+  font-variant-numeric: tabular-nums;
+  transition: color 0.2s;
+}
+
+.char-counter--active {
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.char-counter-hint {
+  font-size: 0.72rem;
+  color: var(--color-slate-400);
+  font-style: italic;
+}
+
+[data-theme="dark"] .char-counter-hint {
+  color: var(--color-slate-500);
+}
+
+/* ── Tab badge (e.g. "OCR" label inside screenshot tab) ────── */
+.tab-badge {
+  display: inline-block;
+  margin-left: 0.4rem;
+  padding: 0.1rem 0.45rem;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  color: var(--color-primary);
+  background: var(--color-primary-50);
+  border-radius: var(--radius-full);
+  vertical-align: middle;
+  border: 1px solid var(--color-info-border);
+}
+
+/* Active tab: invert badge colours to stay legible on blue bg */
+.tab-btn.active .tab-badge {
+  color: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+[data-theme="dark"] .tab-badge {
+  color: var(--color-primary);
+  background: var(--color-primary-50);
+  border-color: var(--color-info-border);
+}
+
+[data-theme="dark"] .tab-btn.active .tab-badge {
+  color: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* ── Check form section title ───────────────────────────── */
+/* Specificity must be (0,2,0) to beat .form-card h3 (0,1,1) */
+.form-card .check-form-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-navy);
+  margin-bottom: 1.25rem;
+  padding-bottom: 0.65rem;
+  border-bottom: 1.5px solid var(--color-slate-300);
+}
+
+[data-theme="dark"] .form-card .check-form-title {
+  border-bottom-color: var(--color-slate-200);
+}
+
+/* ── Check Message page: constrain single-column layout width on desktop ─
+   Without this, the form stretches to ~1080px on 1440px viewports.
+   860px keeps reads natural while leaving breathing room next to sidebar.  */
+.check-message-layout {
+  max-width: 860px;
 }
 
 /* Wallet provider chips — dark mode */

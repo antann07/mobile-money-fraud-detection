@@ -75,17 +75,33 @@ function Navbar() {
             <span className="status-dot"></span>
             System Active
           </span>
+
           {token && displayName && (
-            <span className="navbar-user-identity" title={role || "customer"}>
-              {displayName}
-            </span>
+            <>
+              {/* Desktop: full name */}
+              <span className="navbar-user-identity" title={role || "customer"} aria-hidden="true">
+                {displayName}
+              </span>
+              {/* Mobile: compact initial chip — aria-label exposes the full name
+                  since navbar-user-identity is display:none on small screens     */}
+              <span
+                className={`navbar-user-chip${role === "admin" ? " navbar-user-chip--admin" : ""}`}
+                title={displayName}
+                aria-label={`Logged in as ${displayName}`}
+              >
+                {displayName.charAt(0).toUpperCase()}
+              </span>
+            </>
           )}
+
           {token && role === "admin" && (
             <span className="navbar-role-badge">Admin</span>
           )}
+
           {token && (
-            <button onClick={handleLogout} className="btn-logout">
-              Logout
+            <button onClick={handleLogout} className="btn-logout" aria-label="Log out">
+              <span className="btn-logout-text">Logout</span>
+              <span className="btn-logout-icon" aria-hidden="true">&#10005;</span>
             </button>
           )}
         </div>
