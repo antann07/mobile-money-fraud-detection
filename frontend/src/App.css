@@ -342,7 +342,7 @@ body {
   margin-left: auto;
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 1rem;
 }
 
 .navbar-status {
@@ -351,11 +351,11 @@ body {
   gap: 0.45rem;
   font-size: 0.74rem;
   font-weight: 500;
-  color: rgba(255, 255, 255, 0.5);
-  background: rgba(255, 255, 255, 0.06);
-  padding: 0.35rem 0.85rem;
+  color: rgba(255, 255, 255, 0.55);
+  background: rgba(255, 255, 255, 0.07);
+  padding: 0.35rem 0.9rem;
   border-radius: var(--radius-full);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 /* Status dot — no glow animation; steady indicator for a calm dashboard */
@@ -383,16 +383,17 @@ body {
 }
 
 .btn-logout {
-  padding: 0.38rem 0.95rem;
+  padding: 0.38rem 1rem;
   font-size: 0.76rem;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.82);
-  background: rgba(180, 50, 50, 0.45);   /* quieter red — present, not alarming */
-  border: 1px solid rgba(180, 50, 50, 0.3);
+  color: rgba(255, 255, 255, 0.85);
+  background: rgba(180, 50, 50, 0.45);
+  border: 1px solid rgba(180, 50, 50, 0.35);
   border-radius: var(--radius-sm);
   cursor: pointer;
   transition: all var(--transition-fast);
   font-family: inherit;
+  margin-left: 0.15rem;
 }
 
 .btn-logout:hover {
@@ -574,14 +575,14 @@ body {
   font-size: 0.63rem;
   text-transform: uppercase;
   letter-spacing: 1.6px;
-  color: var(--color-slate-500);
+  color: var(--color-slate-600);
   font-weight: 700;
 }
 
 .sidebar-portal-label {
   font-size: 0.77rem;
-  color: var(--color-slate-600);
-  font-weight: 400;
+  color: var(--color-slate-700);
+  font-weight: 500;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -596,10 +597,10 @@ body {
   display: flex;
   align-items: center;
   gap: 0.8rem;
-  padding: 0.72rem 1.1rem;     /* tighter horizontal — visual indent from sidebar edge */
-  margin: 2px 0.9rem;          /* wider margin = links are visually centred in the rail  */
+  padding: 0.72rem 1.1rem;
+  margin: 2px 0.9rem;
   border-radius: var(--radius-sm);
-  color: var(--color-slate-600);
+  color: var(--color-navy-mid);
   text-decoration: none;
   font-size: 0.87rem;
   font-weight: 500;
@@ -633,12 +634,12 @@ body {
   display: flex;
   align-items: center;
   gap: 0.6rem;
-  margin: 0.9rem 1.8rem 0.35rem;  /* aligns with the inset nav-link margin */
+  margin: 0.9rem 1.8rem 0.35rem;
   font-size: 0.7rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: var(--color-slate-500);
+  color: var(--color-slate-600);
 }
 .sidebar-divider::after {
   content: '';
@@ -652,10 +653,10 @@ body {
 }
 
 .sidebar-footer {
-  padding: 1.1rem 1.5rem;      /* matches updated header padding */
+  padding: 1.1rem 1.5rem;
   border-top: 1px solid var(--color-slate-200);
   font-size: 0.68rem;
-  color: var(--color-slate-400);
+  color: var(--color-slate-500);
   text-align: center;
   font-weight: 500;
   letter-spacing: 0.2px;
@@ -674,16 +675,16 @@ body {
    ============================================================ */
 .page-content {
   flex: 1;
-  padding: 2rem 2.75rem 3rem;  /* slightly wider left-right padding for clear sidebar gap */
+  padding: 2rem 2.5rem 3rem;
   background-color: var(--color-bg);
   overflow-y: auto;
   min-height: calc(100vh - var(--navbar-height));
 }
 
 .page-wrapper {
-  max-width: 1400px;
+  max-width: 1200px;
   width: 100%;
-  margin: 0 auto;  /* centre content within the content area on wide viewports */
+  margin: 0 auto;
 }
 
 .page-body {
@@ -693,20 +694,20 @@ body {
 }
 
 .page-header {
-  margin-bottom: 1.75rem;
+  margin-bottom: 1.5rem;
 }
 
 .page-header h1 {
-  font-size: 1.45rem;
+  font-size: 1.35rem;
   font-weight: 700;
   color: var(--color-navy);
-  margin-bottom: 0.3rem;
+  margin-bottom: 0.25rem;
   letter-spacing: -0.3px;
-  line-height: 1.25;
+  line-height: 1.3;
 }
 
 .page-header p {
-  font-size: 0.88rem;
+  font-size: 0.85rem;
   color: var(--color-slate-600);
   margin: 0;
   line-height: 1.55;
@@ -729,14 +730,14 @@ body {
 
 .summary-card {
   background: var(--color-white);
-  padding: 1.4rem 1.5rem 1.3rem;
+  padding: 1.25rem 1.35rem 1.15rem;
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
   transition: transform var(--transition-normal), box-shadow var(--transition-normal);
   border: 1px solid var(--color-slate-200);
   position: relative;
   overflow: hidden;
-  min-height: 100px;
+  min-height: 96px;
 }
 
 .summary-card::before {
@@ -792,26 +793,26 @@ body {
 
 .summary-card h3 {
   color: var(--color-slate-600);
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   text-transform: uppercase;
-  letter-spacing: 0.9px;
-  margin-bottom: 0.5rem;
-  font-weight: 600;
+  letter-spacing: 0.8px;
+  margin-bottom: 0.35rem;
+  font-weight: 700;
 }
 
 .summary-value {
-  font-size: 2.2rem;
+  font-size: 2rem;
   font-weight: 800;
   color: var(--color-navy);
   line-height: 1.1;
   letter-spacing: -0.5px;
-  margin-bottom: 0.3rem;
+  margin-bottom: 0.2rem;
 }
 
 .summary-note {
   margin: 0;
   color: var(--color-slate-500);
-  font-size: 0.76rem;
+  font-size: 0.74rem;
   line-height: 1.4;
 }
 
@@ -1234,22 +1235,22 @@ body {
 .empty-state {
   text-align: center;
   padding: 4rem 2rem;
-  color: var(--color-slate-400);
+  color: var(--color-slate-500);
   background: var(--color-white);
   border-radius: var(--radius-lg);
-  border: 2px dashed var(--color-slate-200);
+  border: 2px dashed var(--color-slate-300);
 }
 
 .empty-state-icon {
   font-size: 3.25rem;
   margin-bottom: 1rem;
-  opacity: 0.65;
+  opacity: 0.7;
   display: block;
 }
 
 .empty-state p {
   font-size: 0.92rem;
-  color: var(--color-slate-500);
+  color: var(--color-slate-600);
   margin: 0;
   font-weight: 500;
   line-height: 1.5;
@@ -2210,6 +2211,16 @@ body {
 
   .navbar-subtitle {
     display: none;
+  }
+
+  .navbar-title {
+    font-size: 0.92rem;
+  }
+
+  .navbar-logo {
+    width: 32px;
+    height: 32px;
+    font-size: 1.05rem;
   }
 
   /* Remove the T-intersection brand anchor — sidebar is a full-screen
@@ -3753,7 +3764,7 @@ details > summary {
    Without this, the form stretches to ~1080px on 1440px viewports.
    860px keeps reads natural while leaving breathing room next to sidebar.  */
 .check-message-layout {
-  max-width: 860px;
+  max-width: 780px;
 }
 
 /* Wallet provider chips — dark mode */
@@ -3914,8 +3925,10 @@ details > summary {
   text-transform: uppercase;
   letter-spacing: 0.9px;
   font-weight: 700;
-  color: var(--color-slate-500);
+  color: var(--color-slate-600);
   margin: 0 0 1rem;
+  padding-bottom: 0.6rem;
+  border-bottom: 1px solid var(--color-slate-100);
 }
 
 /* ── Security overview meter ─────────────────────────────── */
@@ -3956,7 +3969,7 @@ details > summary {
 .dash-meter-sub {
   margin: 0.45rem 0 0;
   font-size: 0.73rem;
-  color: var(--color-slate-400);
+  color: var(--color-slate-500);
   line-height: 1.4;
 }
 
@@ -3994,7 +4007,7 @@ details > summary {
   text-transform: uppercase;
   letter-spacing: 0.6px;
   font-weight: 600;
-  color: var(--color-slate-400);
+  color: var(--color-slate-500);
 }
 
 /* ── Quick actions panel ─────────────────────────────────── */
@@ -4006,7 +4019,7 @@ details > summary {
 .dash-action-list {
   display: flex;
   flex-direction: column;
-  gap: 0.65rem;
+  gap: 0.55rem;
   margin-top: auto;
 }
 
@@ -4016,7 +4029,8 @@ details > summary {
   justify-content: center;
   width: 100% !important;
   gap: 0.45rem;
-  font-size: 0.87rem !important;
+  font-size: 0.85rem !important;
+  min-height: 42px;
 }
 
 /* ── Recent checks section ───────────────────────────────── */
@@ -4059,8 +4073,8 @@ details > summary {
 .dash-recent-row {
   display: flex;
   align-items: center;
-  gap: 0.85rem;
-  padding: 0.65rem 1.25rem;
+  gap: 1rem;
+  padding: 0.7rem 1.25rem;
   border-bottom: 1px solid var(--color-slate-100);
   text-decoration: none;
   color: inherit;
@@ -4088,7 +4102,7 @@ details > summary {
 .dash-recent-sender {
   flex: 1;
   font-size: 0.87rem;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--color-navy);
   white-space: nowrap;
   overflow: hidden;
@@ -4110,7 +4124,7 @@ details > summary {
 
 .dash-recent-time {
   font-size: 0.75rem;
-  color: var(--color-slate-400);
+  color: var(--color-slate-500);
   white-space: nowrap;
   flex-shrink: 0;
 }
@@ -4158,8 +4172,8 @@ details > summary {
     display: none; /* saves space on narrow screens */
   }
   .dash-recent-row {
-    padding: 0.55rem 0.9rem;
-    gap: 0.6rem;
+    padding: 0.6rem 0.9rem;
+    gap: 0.65rem;
   }
   .dash-recent-pill {
     min-width: 80px;

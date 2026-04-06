@@ -129,12 +129,12 @@ function Dashboard() {
     } catch { return null; }
   })();
 
-  const greeting = username ? `Welcome, ${username}` : "Welcome";
+  const greeting = username ? `Welcome back, ${username}` : "Welcome";
 
   return (
     <PageLayout
-      title={`${greeting} — Wallet Protection Dashboard`}
-      subtitle="Live overview of your wallets and message verification status."
+      title={greeting}
+      subtitle="Your wallet protection overview — wallets, verifications, and alerts at a glance."
     >
 
       {/* Backend connection — only surface an error if it actually fails */}
@@ -194,7 +194,7 @@ function Dashboard() {
                   <div>
                     <h3>Linked Wallets</h3>
                     <div className="summary-value">{stats.wallets}</div>
-                    <p className="summary-note">Mobile money accounts connected</p>
+                    <p className="summary-note">MoMo accounts linked</p>
                   </div>
                   <div className="card-icon-bg blue">&#128179;</div>
                 </div>
@@ -205,7 +205,7 @@ function Dashboard() {
                   <div>
                     <h3>Messages Checked</h3>
                     <div className="summary-value">{stats.totalChecks}</div>
-                    <p className="summary-note">SMS and screenshot verifications</p>
+                    <p className="summary-note">Total verifications run</p>
                   </div>
                   <div className="card-icon-bg amber">&#128232;</div>
                 </div>
@@ -216,7 +216,7 @@ function Dashboard() {
                   <div>
                     <h3>Confirmed Genuine</h3>
                     <div className="summary-value">{stats.verified}</div>
-                    <p className="summary-note">Messages verified as authentic</p>
+                    <p className="summary-note">Verified authentic</p>
                   </div>
                   <div className="card-icon-bg green">&#128737;&#65039;</div>
                 </div>
@@ -229,7 +229,7 @@ function Dashboard() {
                     <div className={`summary-value${stats.flagged > 0 ? " danger-text" : ""}`}>
                       {stats.flagged}
                     </div>
-                    <p className="summary-note">Suspicious or potential fraud</p>
+                    <p className="summary-note">Needs review</p>
                   </div>
                   <div className="card-icon-bg red">&#9888;&#65039;</div>
                 </div>
